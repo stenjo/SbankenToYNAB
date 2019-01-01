@@ -1,3 +1,4 @@
 personal_api_settings.py
 .vscode/*
 
+__pycache__/*
