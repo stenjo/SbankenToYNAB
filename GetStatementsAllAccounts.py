@@ -34,7 +34,7 @@ def main():
             http_session, 
             api_settings.CUSTOMERID,
             account['accountId'],
-            12)
+            1)
         # pprint.pprint(transactions)
 
         with open(account['name']+'_'+account['accountNumber']+'.csv', 'w', encoding='utf-8') as csvfile:

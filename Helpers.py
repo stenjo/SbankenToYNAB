@@ -4,6 +4,7 @@ from requests_oauthlib import OAuth2Session
 import urllib.parse
 import csv
 import datetime
+import pprint
 
 def enable_debug_logging():
     import logging
@@ -55,7 +56,7 @@ def get_accounts(http_session: requests.Session, customerid):
         raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
 
 def get_transactions_period(http_session: requests.Session, customerid, account_id, startDate, endDate):
-    
+    # print(endDate)
     response = http_session.get(
         "https://api.sbanken.no/bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d")),
         headers={'customerId': customerid}
@@ -85,7 +86,8 @@ def get_transactions_year(http_session: requests.Session, customerid, account_id
     return get_transactions_period(http_session, customerid, account_id, startDate, endDate)
 
 def getTransactionDate(transaction):
-    d = datetime.datetime.fromisoformat(transaction['interestDate'])
+    # d = datetime.datetime.fromisoformat(transaction['interestDate'])
+    d = datetime.datetime.strptime(transaction['interestDate'].split('T')[0], "%Y-%m-%d")
     code = transaction['transactionTypeCode']
     if  code == 710 or code == 709:
         dt = transaction['text'].split(' ')
@@ -96,9 +98,14 @@ def getTransactionDate(transaction):
             tDate = datetime.datetime.strptime(dt[0], "%d.%m")
             d = datetime.date(d.year, tDate.month, tDate.day)
     elif code == 714: # Visa
-        d = datetime.datetime.fromisoformat(transaction['cardDetails']['purchaseDate'])
+        d = datetime.datetime.strptime(transaction['cardDetails']['purchaseDate'].split('T')[0], "%Y-%m-%d")
+        # d = datetime.datetime.fromisoformat(transaction['cardDetails']['purchaseDate'])
 
     return d.strftime('%d.%m.%Y')
+
+def getYnabTransactionDate(transaction):
+    d = datetime.datetime.strptime(getTransactionDate(transaction), "%d.%m.%Y")
+    return d.strftime('%Y-%m-%d')
 
 def getPayee(transaction):
     if transaction['transactionTypeCode'] == 752:   # renter
@@ -123,6 +130,8 @@ def getPayee(transaction):
         # print(transaction['text'])
         return (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
+        if transaction['otherAccountNumberSpecified'] == True:
+            pprint.pprint(transaction)
         if transaction['amount'] > 0:
             return 'Transfer from:'
         else:
@@ -158,3 +167,9 @@ def getIn(transaction):
         return transaction['amount']
     else:
         return ''
+
+def getIntAmountMilli(transaction):
+    return int(transaction['amount'] * 1000)
+
+def getYnabSyncId(transaction):
+    return "YNAB:"+str(getIntAmountMilli(transaction))+":"+getYnabTransactionDate(transaction)+":"+"1"
