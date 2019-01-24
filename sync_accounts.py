@@ -19,8 +19,6 @@ def findMatchingTransfer(original_account, transaction, accounts_transactions_li
                     d['Name'] = accounts[account_idx]['Name']
                     d['Account'] = accounts[account_idx]['account']
                     return d
-                    # return {'Name':accounts[account_idx]['Name'], 'Account':accounts[account_idx]['account']}
-
 
 # Configure API key authorization: bearer
 configuration = ynab.Configuration()

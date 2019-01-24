@@ -9,24 +9,10 @@ def main():
 
     http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
 
-    # customer_info = get_customer_information(http_session, api_settings.CUSTOMERID)
-    # pprint.pprint(customer_info)
-
     accounts = get_accounts(
         http_session, 
         api_settings.CUSTOMERID)
 
-    # pprint.pprint(accounts)
-
-
-    # transactions = get_transactions(
-    #         http_session, 
-    #         api_settings.CUSTOMERID,
-    #         'A9743ECC8A17F4B89310ADDD3F2D9735',
-    #         3)
-    # pprint.pprint(transactions)
-
-    # exit(1)
 
     for account in accounts:
 
