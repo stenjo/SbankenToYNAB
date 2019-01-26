@@ -5,5 +5,4 @@ ynab/models/__pycache__/*
 ynab/ynab/__pycache__/*
 ynab/__pycache__/*
 __pycache__/*
-bash_script.sh
-powershell_script.ps1
+api_settings.py
