@@ -39,3 +39,10 @@ balances = [
         'category_id'   : '2fa73af5-****-****-****-10bb7e69c9c9'
     }
 ]
+account_statuses = [
+    {
+        'Name': 'Brukskonto',          
+        'Number': 97000000321, 
+        'ID': 'ABCDEF1234567890ABCDEF0123456789', 
+    }
+]

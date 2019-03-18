@@ -78,8 +78,11 @@ for account_idx in range(len(accounts)):
 
                 transaction.payee_name += payee['Name']
 
+        transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
+
         if len(account_map['account']) > 2:
             ynab_transactions.append(transaction)
+
 
     if len(ynab_transactions) > 0:
 
