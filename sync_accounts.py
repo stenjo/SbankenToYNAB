@@ -31,7 +31,7 @@ api_instance = ynab.TransactionsApi(ynab.ApiClient(configuration))
 #SBanken auth
 http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
 today = datetime.date.today()
-endDate = today - datetime.timedelta(1)
+endDate = today
 startDate = today - datetime.timedelta(6)   # Last 5 days
 
 accounts = []
