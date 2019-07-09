@@ -97,7 +97,7 @@ def getTransactionDate(transaction):
         else:
             tDate = datetime.datetime.strptime(dt[0], "%d.%m")
             d = datetime.date(d.year, tDate.month, tDate.day)
-    elif code == 714: # Visa
+    elif code == 714 and transaction['cardDetailsSpecified']: # Visa
         d = datetime.datetime.strptime(transaction['cardDetails']['purchaseDate'].split('T')[0], "%Y-%m-%d")
         # d = datetime.datetime.fromisoformat(transaction['cardDetails']['purchaseDate'])
 
@@ -121,10 +121,12 @@ def getPayee(transaction):
         if payee[0] == 'KORREKSJON':
             return (payee[3]+ ' ' + payee[4]).capitalize()
         return (payee[1]+ ' ' + payee[2]).capitalize()
-    elif transaction['transactionTypeCode'] == 714: #Visa vare
+    elif transaction['transactionTypeCode'] == 714 and transaction['cardDetailsSpecified']: #Visa vare
         payee = transaction['cardDetails']['merchantName']
         # print(transaction['text'])
         return payee.capitalize()
+    elif transaction['transactionTypeCode'] == 714 and not transaction['cardDetailsSpecified']:
+        raise ValueError ("Visa transfer has no card details specified so far. Waiting with syncing it.")
     elif transaction['transactionTypeCode'] == 561:   # Varekjøp
         payee = transaction['text'].split(' ')
         # print(transaction['text'])
