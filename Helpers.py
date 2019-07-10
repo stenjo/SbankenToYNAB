@@ -108,42 +108,42 @@ def getYnabTransactionDate(transaction):
     return d.strftime('%Y-%m-%d')
 
 def getPayee(transaction):
+    res = bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
     if transaction['transactionTypeCode'] == 752:   # renter
-        return 'Sbanken'
+        res = 'Sbanken'
     elif transaction['transactionTypeCode'] == 709 or transaction['transactionTypeCode'] == 73:   # Varer
         payee = transaction['text'].split(' ')
         if payee[0] == 'KORREKSJON':
-            return (payee[3]+ ' ' + payee[4]).capitalize()
-        return (payee[1]+ ' ' + payee[2]).capitalize()
+            res = (payee[3]+ ' ' + payee[4]).capitalize()
+        res = (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 710 or transaction['transactionTypeCode'] == 73:   # Varekjøp
         payee = transaction['text'].split(' ')
         # print(transaction['text'])
         if payee[0] == 'KORREKSJON':
-            return (payee[3]+ ' ' + payee[4]).capitalize()
-        return (payee[1]+ ' ' + payee[2]).capitalize()
+            res = (payee[3]+ ' ' + payee[4]).capitalize()
+        res = (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 714 and transaction['cardDetailsSpecified']: #Visa vare
         payee = transaction['cardDetails']['merchantName']
         # print(transaction['text'])
-        return payee.capitalize()
+        res = payee.capitalize()
     elif transaction['transactionTypeCode'] == 714 and not transaction['cardDetailsSpecified']:
         raise ValueError ("Visa transfer has no card details specified so far. Waiting with syncing it.")
     elif transaction['transactionTypeCode'] == 561:   # Varekjøp
         payee = transaction['text'].split(' ')
         # print(transaction['text'])
-        return (payee[1]+ ' ' + payee[2]).capitalize()
+        res = (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['otherAccountNumberSpecified'] == True:
             pprint.pprint(transaction)
         if transaction['amount'] > 0:
-            return 'Transfer from:'
+            res = 'Transfer from:'
         else:
-            return 'Transfer to:'
+            res = 'Transfer to:'
     elif transaction['transactionTypeCode'] == 203:  # Nettgiro
         payee = transaction['text'].split(' ')
-        return (payee[2] + ' ' + payee[3]).capitalize()
+        res = (payee[2] + ' ' + payee[3]).capitalize()
 
-    
-    return bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
+    return res[0:50]
 
 def getMemo(transaction):
     if transaction['transactionTypeCode'] == 710:   # Varekjøp
