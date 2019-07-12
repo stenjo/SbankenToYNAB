@@ -51,7 +51,11 @@ for account_idx in range(len(accounts)):
 
     for item in transactions:
         payee_id = None
-        payee_name = getPayee(item)
+        try:
+            payee_name = getPayee(item)
+         # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
+        except ValueError:
+            pass
         transaction = ynab.TransactionDetail(
             date=getYnabTransactionDate(item), 
             amount=getIntAmountMilli(item), 

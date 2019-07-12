@@ -57,15 +57,19 @@ def get_accounts(http_session: requests.Session, customerid):
 
 def get_transactions_period(http_session: requests.Session, customerid, account_id, startDate, endDate):
     # print(endDate)
-    response = http_session.get(
-        "https://api.sbanken.no/bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d")),
-        headers={'customerId': customerid}
-    ).json()
-
+    queryString = "https://api.sbanken.no/bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
+    response = http_session.get(queryString
+        , headers={'customerId': customerid}
+    )
+    if response.ok:
+        response = response.json()
+    else:
+        raise RuntimeError("Request to transactions API returned with HTTP status code {} with reason {}. Request was {}".format(response.status_code, response.reason, queryString))
+    
     if not response["isError"]:
         return response["items"]
     else:
-        raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
+        raise RuntimeError("{} {}, Request was {}".format(response["errorType"], response["errorMessage"], queryString))
 
 def get_transactions(http_session: requests.Session, customerid, account_id, months):
     today = datetime.date.today()
@@ -97,7 +101,7 @@ def getTransactionDate(transaction):
         else:
             tDate = datetime.datetime.strptime(dt[0], "%d.%m")
             d = datetime.date(d.year, tDate.month, tDate.day)
-    elif code == 714: # Visa
+    elif code == 714 and transaction['cardDetailsSpecified']: # Visa
         d = datetime.datetime.strptime(transaction['cardDetails']['purchaseDate'].split('T')[0], "%Y-%m-%d")
         # d = datetime.datetime.fromisoformat(transaction['cardDetails']['purchaseDate'])
 
@@ -108,40 +112,42 @@ def getYnabTransactionDate(transaction):
     return d.strftime('%Y-%m-%d')
 
 def getPayee(transaction):
+    res = bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
     if transaction['transactionTypeCode'] == 752:   # renter
-        return 'Sbanken'
+        res = 'Sbanken'
     elif transaction['transactionTypeCode'] == 709 or transaction['transactionTypeCode'] == 73:   # Varer
         payee = transaction['text'].split(' ')
         if payee[0] == 'KORREKSJON':
-            return (payee[3]+ ' ' + payee[4]).capitalize()
-        return (payee[1]+ ' ' + payee[2]).capitalize()
+            res = (payee[3]+ ' ' + payee[4]).capitalize()
+        res = (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 710 or transaction['transactionTypeCode'] == 73:   # Varekjøp
         payee = transaction['text'].split(' ')
         # print(transaction['text'])
         if payee[0] == 'KORREKSJON':
-            return (payee[3]+ ' ' + payee[4]).capitalize()
-        return (payee[1]+ ' ' + payee[2]).capitalize()
-    elif transaction['transactionTypeCode'] == 714: #Visa vare
+            res = (payee[3]+ ' ' + payee[4]).capitalize()
+        res = (payee[1]+ ' ' + payee[2]).capitalize()
+    elif transaction['transactionTypeCode'] == 714 and transaction['cardDetailsSpecified']: #Visa vare
         payee = transaction['cardDetails']['merchantName']
         # print(transaction['text'])
-        return payee.capitalize()
+        res = payee.capitalize()
+    elif transaction['transactionTypeCode'] == 714 and not transaction['cardDetailsSpecified']:
+        raise ValueError ("Visa transfer has no card details specified so far. Waiting with syncing it.")
     elif transaction['transactionTypeCode'] == 561:   # Varekjøp
         payee = transaction['text'].split(' ')
         # print(transaction['text'])
-        return (payee[1]+ ' ' + payee[2]).capitalize()
+        res = (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['otherAccountNumberSpecified'] == True:
             pprint.pprint(transaction)
         if transaction['amount'] > 0:
-            return 'Transfer from:'
+            res = 'Transfer from:'
         else:
-            return 'Transfer to:'
+            res = 'Transfer to:'
     elif transaction['transactionTypeCode'] == 203:  # Nettgiro
         payee = transaction['text'].split(' ')
-        return (payee[2] + ' ' + payee[3]).capitalize()
+        res = (payee[2] + ' ' + payee[3]).capitalize()
 
-    
-    return bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
+    return res[0:50]
 
 def getMemo(transaction):
     if transaction['transactionTypeCode'] == 710:   # Varekjøp
