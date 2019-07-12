@@ -57,15 +57,19 @@ def get_accounts(http_session: requests.Session, customerid):
 
 def get_transactions_period(http_session: requests.Session, customerid, account_id, startDate, endDate):
     # print(endDate)
-    response = http_session.get(
-        "https://api.sbanken.no/bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d")),
-        headers={'customerId': customerid}
-    ).json()
-
+    queryString = "https://api.sbanken.no/bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
+    response = http_session.get(queryString
+        , headers={'customerId': customerid}
+    )
+    if response.ok:
+        response = response.json()
+    else:
+        raise RuntimeError("Request to transactions API returned with HTTP status code {} with reason {}. Request was {}".format(response.status_code, response.reason, queryString))
+    
     if not response["isError"]:
         return response["items"]
     else:
-        raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
+        raise RuntimeError("{} {}, Request was {}".format(response["errorType"], response["errorMessage"], queryString))
 
 def get_transactions(http_session: requests.Session, customerid, account_id, months):
     today = datetime.date.today()
