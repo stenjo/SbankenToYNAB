@@ -31,7 +31,7 @@ def create_authenticated_http_session(client_id, client_secret) -> requests.Sess
 
 def get_customer_information(http_session: requests.Session, customerid):
     response_object = http_session.get(
-        "https://api.sbanken.no/customers/api/v1/Customers",
+        "https://api.sbanken.no/exec.customers/api/v1/Customers",
         headers={'customerId': customerid}
     )
     print(response_object)
@@ -46,7 +46,7 @@ def get_customer_information(http_session: requests.Session, customerid):
 
 def get_accounts(http_session: requests.Session, customerid):
     response = http_session.get(
-        "https://api.sbanken.no/bank/api/v1/Accounts",
+        "https://api.sbanken.no/exec.bank/api/v1/Accounts",
         headers={'customerId': customerid}
     ).json()
 
@@ -57,7 +57,7 @@ def get_accounts(http_session: requests.Session, customerid):
 
 def get_transactions_period(http_session: requests.Session, customerid, account_id, startDate, endDate):
     # print(endDate)
-    queryString = "https://api.sbanken.no/bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
+    queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
     response = http_session.get(queryString
         , headers={'customerId': customerid}
     )
