@@ -31,7 +31,7 @@ api_instance = ynab.TransactionsApi(ynab.ApiClient(configuration))
 #SBanken auth
 http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
 today = datetime.date.today()
-endDate = today - datetime.timedelta(1)
+endDate = today
 startDate = today - datetime.timedelta(6)   # Last 5 days
 
 accounts = []
@@ -51,7 +51,11 @@ for account_idx in range(len(accounts)):
 
     for item in transactions:
         payee_id = None
-        payee_name = getPayee(item)
+        try:
+            payee_name = getPayee(item)
+         # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
+        except ValueError:
+            pass
         transaction = ynab.TransactionDetail(
             date=getYnabTransactionDate(item), 
             amount=getIntAmountMilli(item), 
