@@ -55,7 +55,9 @@ for account_idx in range(len(accounts)):
             payee_name = getPayee(item)
          # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
         except ValueError:
-            pass
+            # We hop over transaction that has no payee so far
+            print ("Didn't managed to get payee for transaction {}".format(item))
+            continue
         transaction = ynab.TransactionDetail(
             date=getYnabTransactionDate(item), 
             amount=getIntAmountMilli(item), 
