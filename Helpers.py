@@ -131,7 +131,7 @@ def getPayee(transaction):
         # print(transaction['text'])
         res = payee.capitalize()
     elif transaction['transactionTypeCode'] == 714 and not transaction['cardDetailsSpecified']:
-        raise ValueError ("Visa transfer has no card details specified so far. Waiting with syncing it.")
+        raise ValueError ("Visa transfer has no card details specified so far.")
     elif transaction['transactionTypeCode'] == 561:   # Varekjøp
         payee = transaction['text'].split(' ')
         # print(transaction['text'])
@@ -145,8 +145,10 @@ def getPayee(transaction):
             res = 'Transfer to:'
     elif transaction['transactionTypeCode'] == 203:  # Nettgiro
         payee = transaction['text'].split(' ')
-        res = (payee[2] + ' ' + payee[3]).capitalize()
-
+        try:
+            res = (payee[2] + ' ' + payee[3]).capitalize()
+        except IndexError:
+            raise ValueError ("Can't extract payee from nettgiro.")
     return res[0:50]
 
 def getMemo(transaction):
