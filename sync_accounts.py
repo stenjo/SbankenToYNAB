@@ -36,12 +36,16 @@ startDate = today - datetime.timedelta(6)   # Last 5 days
 
 accounts = []
 for mapping in api_settings.mapping:
-    accounts.append(get_transactions_period(
-        http_session, 
-        api_settings.CUSTOMERID,
-        mapping['ID'],
-        startDate,
-        endDate))
+    try:
+        accounts.append(get_transactions_period(
+            http_session, 
+            api_settings.CUSTOMERID,
+            mapping['ID'],
+            startDate,
+            endDate))
+    except RuntimeError as e: # We skip an account if there was error talking to it
+        print ("Failed to append an account {}. Error message was ".format(mapping, str(e)))
+        continue
 
 
 for account_idx in range(len(accounts)):
