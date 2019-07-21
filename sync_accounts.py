@@ -51,6 +51,10 @@ for account_idx in range(len(accounts)):
 
     for item in transactions:
         payee_id = None
+        if api_settings.includeReservedTransactions != True:
+            if item['isReservation'] == True:
+                pass
+
         try:
             payee_name = getPayee(item)
          # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far

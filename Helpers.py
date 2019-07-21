@@ -185,19 +185,25 @@ def getPayee(transaction):
 
 def getMemo(transaction):
     transactionId = ''
+
     if transaction['cardDetailsSpecified'] == True:
         transactionId = ' tId:'+transaction['cardDetails']['transactionId']
+    
+    isReservation = ''
+    if transaction['isReservation'] == True:
+        isReservation = 'Reserved: '
+
     if transaction['transactionTypeCode'] == 710:   # Varekjøp
-        return transaction['text'].split(' ',1)[1].capitalize() + transactionId
+        return isReservation + transaction['text'].split(' ',1)[1].capitalize() + transactionId
     elif transaction['transactionTypeCode'] == 714: # Visa vare
-        return transaction['text'].split(' ',2)[2].capitalize() + transactionId
+        return isReservation + transaction['text'].split(' ',2)[2].capitalize() + transactionId
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['amount'] > 0:
-            return 'Overføring fra annen egen konto'
+            return isReservation + 'Overføring fra annen egen konto'
         else:
-            return 'Overføring til annen egen konto'
+            return isReservation + 'Overføring til annen egen konto'
  
-    return transaction['text'].capitalize() + transactionId
+    return isReservation + transaction['text'].capitalize() + transactionId
 
 def getOut(transaction):
     if transaction['amount'] < 0.0:
