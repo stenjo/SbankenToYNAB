@@ -49,11 +49,12 @@ def get_accounts(http_session: requests.Session, customerid):
         "https://api.sbanken.no/exec.bank/api/v1/Accounts",
         headers={'customerId': customerid}
     ).json()
-
+    #print(response)
     if not response["isError"]:
         return response["items"]
     else:
         raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
+
 
 def get_transactions_period(http_session: requests.Session, customerid, account_id, startDate, endDate):
     # print(endDate)
@@ -65,7 +66,33 @@ def get_transactions_period(http_session: requests.Session, customerid, account_
         response = response.json()
     else:
         raise RuntimeError("Request to transactions API returned with HTTP status code {} with reason {}. Request was {}".format(response.status_code, response.reason, queryString))
-    
+
+    if not response["isError"]:
+        return response["items"]
+    else:
+        raise RuntimeError("{} {}, Request was {}".format(response["errorType"], response["errorMessage"], queryString))   
+
+def get_standing_orders(http_session: requests.Session, customerid, account_id):
+
+    print(customerid)
+    print(account_id)
+    response = http_session.get(
+        "https://api.sbanken.no/exec.bank/api/v1/StandingOrders/{}".format(account_id),
+        headers={'customerId': customerid}
+    ).json()
+
+    if not response["isError"]:
+        return response["items"]
+    else:
+        raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
+
+def get_payments(http_session: requests.Session, customerid, account_id):
+    queryString = "https://api.sbanken.no/exec.bank/api/v1/Payments/{}".format(account_id)
+    response = http_session.get(
+        queryString,
+        headers={'customerId': customerid}
+    ).json()
+
     if not response["isError"]:
         return response["items"]
     else:
@@ -73,7 +100,7 @@ def get_transactions_period(http_session: requests.Session, customerid, account_
 
 def get_transactions(http_session: requests.Session, customerid, account_id, months):
     today = datetime.date.today()
-    endDate = today - datetime.timedelta(1)
+    endDate = today - datetime.timedelta(0)
     startDate = today - datetime.timedelta(30*months)
 
     return get_transactions_period(http_session, customerid, account_id, startDate, endDate)
@@ -108,8 +135,13 @@ def getTransactionDate(transaction):
     return d.strftime('%d.%m.%Y')
 
 def getYnabTransactionDate(transaction):
-    d = datetime.datetime.strptime(getTransactionDate(transaction), "%d.%m.%Y")
-    return d.strftime('%Y-%m-%d')
+    if 'beneficiaryName' in transaction:
+        d = datetime.datetime.strptime(getPaymentsDate(transaction), "%d.%m.%Y")
+        return d.strftime('%Y-%m-%d')
+    else:
+        d = datetime.datetime.strptime( getTransactionDate(transaction), "%d.%m.%Y")
+        return d.strftime('%Y-%m-%d')
+
 
 def getPayee(transaction):
     res = bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
@@ -134,8 +166,10 @@ def getPayee(transaction):
         raise ValueError ("Visa transfer has no card details specified so far. Waiting with syncing it.")
     elif transaction['transactionTypeCode'] == 561:   # Varekjøp
         payee = transaction['text'].split(' ')
-        # print(transaction['text'])
-        res = (payee[1]+ ' ' + payee[2]).capitalize()
+        #print(transaction)
+        if len(payee) < 2:
+            return transaction['transactionType']
+        return (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['otherAccountNumberSpecified'] == True:
             pprint.pprint(transaction)
@@ -145,22 +179,25 @@ def getPayee(transaction):
             res = 'Transfer to:'
     elif transaction['transactionTypeCode'] == 203:  # Nettgiro
         payee = transaction['text'].split(' ')
-        res = (payee[2] + ' ' + payee[3]).capitalize()
+        return (payee[2] + ' ' + payee[3]).capitalize()
 
     return res[0:50]
 
 def getMemo(transaction):
+    transactionId = ''
+    if transaction['cardDetailsSpecified'] == True:
+        transactionId = ' tId:'+transaction['cardDetails']['transactionId']
     if transaction['transactionTypeCode'] == 710:   # Varekjøp
-        return transaction['text'].split(' ',1)[1].capitalize()
+        return transaction['text'].split(' ',1)[1].capitalize() + transactionId
     elif transaction['transactionTypeCode'] == 714: # Visa vare
-        return transaction['text'].split(' ',2)[2].capitalize()
+        return transaction['text'].split(' ',2)[2].capitalize() + transactionId
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['amount'] > 0:
             return 'Overføring fra annen egen konto'
         else:
             return 'Overføring til annen egen konto'
  
-    return transaction['text'].capitalize()
+    return transaction['text'].capitalize() + transactionId
 
 def getOut(transaction):
     if transaction['amount'] < 0.0:
@@ -179,3 +216,8 @@ def getIntAmountMilli(transaction):
 
 def getYnabSyncId(transaction):
     return "YNAB:"+str(getIntAmountMilli(transaction))+":"+getYnabTransactionDate(transaction)+":"+"1"
+
+def getPaymentsDate(payment):
+    d = datetime.datetime.strptime(payment['dueDate'].split('T')[0], "%Y-%m-%d")
+    return d.strftime('%d.%m.%Y')
+
