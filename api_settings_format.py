@@ -5,6 +5,10 @@ CUSTOMERID = "***********"
 CLIENTID = "d38************************a4d"
 SECRET = "****************************************************"
 
+# Set if transaction sync also should include reserved transactions.
+# Transactions may change when confirmed and updates to YNAB may have to be done manually
+includeReservedTransactions = True
+
 # The SBanken to YNAB mappings
 budget_id = '12345ab-6789-abcd-****-fedcba987654' # str | The ID of the Budget.
 api_key = '*********'   # Tha YNAB Api key
