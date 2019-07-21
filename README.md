@@ -8,14 +8,14 @@ The ListAccountsAndIds.py lists all accounts available to your id and prints the
 GetStatementsAllAccounts creates a CSV file for all accounts available the last month.
 
 # Setup guide
-Edit ``api_settings.py`` and supply your client credentials + customer id.
+
 * Requires Python 3
 * Requires package ``requests_oauthlib``:
 ```
 $ pip install requests-oauthlib
 c:> pip install requests-oauthlib
 ```
-For these programs to work, you need to rename the ```api_settings_format.py``` to ```api_settings.py``` and replace all the dummy keys and values with values for your own budget and keys.
+For these programs to work, you need to rename the ```api_settings_format.py``` to ```api_settings.py``` and replace all the dummy keys and values with values for your own budget and keys. Edit ``api_settings.py`` and supply your client credentials + customer id.
 
 # Programs for listing, printing and importing
 ## ListAccountsAndIds.py
@@ -39,4 +39,8 @@ Program is written to be run by a cron job on a server. Runs troug all items in 
 
 ## ynab_get_budgetbalances.py
 To be run by cron-job for publishing of a set of budget balances on a set of categories and their budgeted amounts.
+Posts the results onto an mqtt server for availability to home automation screen or any other display device. I'm using OpenHab2 and have created a template widget for displaying data.
+
+## publish_accounts_status.py
+To be run by cron-job for publishing of a set of account balances from SBanken. Posts both balance and available (available = balance - reservations)
 Posts the results onto an mqtt server for availability to home automation screen or any other display device. I'm using OpenHab2 and have created a template widget for displaying data.
