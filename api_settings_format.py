@@ -5,6 +5,10 @@ CUSTOMERID = "***********"
 CLIENTID = "d38************************a4d"
 SECRET = "****************************************************"
 
+# Set if transaction sync also should include reserved transactions.
+# Transactions may change when confirmed and updates to YNAB may have to be done manually
+includeReservedTransactions = True
+
 # The SBanken to YNAB mappings
 budget_id = '12345ab-6789-abcd-****-fedcba987654' # str | The ID of the Budget.
 api_key = '*********'   # Tha YNAB Api key
@@ -39,3 +43,13 @@ balances = [
         'category_id'   : '2fa73af5-****-****-****-10bb7e69c9c9'
     }
 ]
+<<<<<<< HEAD
+account_statuses = [
+    {
+        'Name': 'Brukskonto',          
+        'Number': 97000000321, 
+        'ID': 'ABCDEF1234567890ABCDEF0123456789', 
+    }
+]
+=======
+>>>>>>> a447f3b6d1c9c1ea7b2ad63026e851432ee8c355

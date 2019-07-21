@@ -55,6 +55,10 @@ for account_idx in range(len(accounts)):
 
     for item in transactions:
         payee_id = None
+        if api_settings.includeReservedTransactions != True:
+            if item['isReservation'] == True:
+                pass
+
         try:
             payee_name = getPayee(item)
          # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
@@ -88,8 +92,11 @@ for account_idx in range(len(accounts)):
 
                 transaction.payee_name += payee['Name']
 
+        transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
+
         if len(account_map['account']) > 2:
             ynab_transactions.append(transaction)
+
 
     if len(ynab_transactions) > 0:
 
