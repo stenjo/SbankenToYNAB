@@ -43,7 +43,6 @@ balances = [
         'category_id'   : '2fa73af5-****-****-****-10bb7e69c9c9'
     }
 ]
-<<<<<<< HEAD
 account_statuses = [
     {
         'Name': 'Brukskonto',          
@@ -51,5 +50,3 @@ account_statuses = [
         'ID': 'ABCDEF1234567890ABCDEF0123456789', 
     }
 ]
-=======
->>>>>>> a447f3b6d1c9c1ea7b2ad63026e851432ee8c355
