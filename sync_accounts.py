@@ -53,7 +53,7 @@ for account_idx in range(len(accounts)):
         payee_id = None
         if api_settings.includeReservedTransactions != True:
             if item['isReservation'] == True:
-                pass
+                continue
 
         try:
             payee_name = getPayee(item)
