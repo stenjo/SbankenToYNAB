@@ -7,7 +7,7 @@ SECRET = "****************************************************"
 
 # Set if transaction sync also should include reserved transactions.
 # Transactions may change when confirmed and updates to YNAB may have to be done manually
-includeReservedTransactions = True
+includeReservedTransactions = False
 
 # The SBanken to YNAB mappings
 budget_id = '12345ab-6789-abcd-****-fedcba987654' # str | The ID of the Budget.
