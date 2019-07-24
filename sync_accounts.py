@@ -32,7 +32,7 @@ api_instance = ynab.TransactionsApi(ynab.ApiClient(configuration))
 http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
 today = datetime.date.today()
 endDate = today
-startDate = today - datetime.timedelta(6)   # Last 5 days
+startDate = today - datetime.timedelta(16)   # Last 5 days
 
 accounts = []
 for mapping in api_settings.mapping:
@@ -45,9 +45,10 @@ for mapping in api_settings.mapping:
 
 
 for account_idx in range(len(accounts)):
-    transactions = accounts[account_idx]
-    account_map = api_settings.mapping[account_idx]
-    ynab_transactions = []
+    transactions = accounts[account_idx]            # Transactions from SBanken
+    account_map = api_settings.mapping[account_idx] # Account mapping
+    ynab_transactions = []                          # Transactions to YNAB
+    import_ids = []                                 # Import ids (before last colon) handled so far for this account
 
     for item in transactions:
         payee_id = None
@@ -60,6 +61,7 @@ for account_idx in range(len(accounts)):
          # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
         except ValueError:
             pass
+        
         transaction = ynab.TransactionDetail(
             date=getYnabTransactionDate(item), 
             amount=getIntAmountMilli(item), 
@@ -71,6 +73,15 @@ for account_idx in range(len(accounts)):
         )
         transaction.payee_name = payee_name
 
+        # Change import_id if same amount on same day several times
+        transaction_ref = ':'.join(transaction.import_id.split(':')[:3])
+        if import_ids.count(transaction_ref) > 0:
+            transaction.import_id=transaction_ref + ":" + str(import_ids.count(transaction_ref)+1)
+            print(transaction.import_id)
+
+        import_ids.append(transaction_ref)
+
+        # Handle transactions between accounts both kept in YNAB
         if item['transactionTypeCode'] == 200: # Transfer between own accounts
             payee = findMatchingTransfer(account_map['ID'], item, accounts, api_settings.mapping)
             if payee != None:
@@ -90,8 +101,7 @@ for account_idx in range(len(accounts)):
 
         if len(account_map['account']) > 2:
             ynab_transactions.append(transaction)
-
-
+        
     if len(ynab_transactions) > 0:
 
         try:
@@ -99,3 +109,4 @@ for account_idx in range(len(accounts)):
             api_response = api_instance.create_transaction(api_settings.budget_id, {"transactions":ynab_transactions})
         except ApiException as e:
             print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
+
