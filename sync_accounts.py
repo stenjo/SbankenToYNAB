@@ -118,8 +118,6 @@ for account_idx in range(len(accounts)):
             except ApiException as e:
                 print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
 
-            print(reserved_transaction.memo, transaction.memo)
-
             continue
 
         if len(account_map['account']) > 2:
