@@ -49,17 +49,18 @@ for account_idx in range(len(accounts)):
     account_map = api_settings.mapping[account_idx] # Account mapping
     ynab_transactions = []                          # Transactions to YNAB
     import_ids = []                                 # Import ids (before last colon) handled so far for this account
-
+    reserved_transactions = []
 
     # Find transactions that are 'Reserved'
-    try:
-        # Get existing transactions that are Reserved in case they need to be updated
-        api_response = api_instance.get_transactions_by_account(api_settings.budget_id, account_map['account'], since_date=startDate)
-    except ApiException as e:
-        print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
+    if len(account_map['account']) > 2: # Only fetch YNAB transactions from accounts that are synced in YNAB
+        try:
+            # Get existing transactions that are Reserved in case they need to be updated
+            api_response = api_instance.get_transactions_by_account(api_settings.budget_id, account_map['account'], since_date=startDate)
+        except ApiException as e:
+            print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
 
-    reserved_transactions = [x for x in api_response.data.transactions if x.memo.split(':')[0] == 'Reserved']
-
+        reserved_transactions = [x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(':')[0] == 'Reserved')]
+        
     for item in transactions:
         payee_id = None
         if api_settings.includeReservedTransactions != True:
