@@ -53,7 +53,7 @@ for account_idx in range(len(accounts)):
 
     # Find transactions that are 'Reserved'
     try:
-        # Create new transaction
+        # Get existing transactions that are Reserved in case they need to be updated
         api_response = api_instance.get_transactions_by_account(api_settings.budget_id, account_map['account'], since_date=startDate)
     except ApiException as e:
         print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
@@ -113,12 +113,12 @@ for account_idx in range(len(accounts)):
             reserved_transaction = [x for x in reserved_transactions if x.import_id == transaction.import_id][0]
             transaction.id = reserved_transaction.id
             try:
-                # Create new transaction
+                # Update existing transaction
                 api_response = api_instance.update_transaction(api_settings.budget_id, reserved_transaction.id, {"transaction":transaction} )
             except ApiException as e:
                 print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
 
-            continue
+            continue    # Do not create a transaction that is updated
 
         if len(account_map['account']) > 2:
             ynab_transactions.append(transaction)
