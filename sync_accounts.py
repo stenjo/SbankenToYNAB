@@ -54,7 +54,7 @@ for account_idx in range(len(accounts)):
         payee_id = None
         if api_settings.includeReservedTransactions != True:
             if item['isReservation'] == True:
-                pass
+                continue
 
         try:
             payee_name = getPayee(item)
@@ -109,4 +109,3 @@ for account_idx in range(len(accounts)):
             api_response = api_instance.create_transaction(api_settings.budget_id, {"transactions":ynab_transactions})
         except ApiException as e:
             print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
-
