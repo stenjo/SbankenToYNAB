@@ -32,7 +32,7 @@ api_instance = ynab.TransactionsApi(ynab.ApiClient(configuration))
 http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
 today = datetime.date.today()
 endDate = today
-startDate = today - datetime.timedelta(16)   # Last 5 days
+startDate = today - datetime.timedelta(6)   # Last 5 days
 
 accounts = []
 for mapping in api_settings.mapping:
@@ -49,6 +49,16 @@ for account_idx in range(len(accounts)):
     account_map = api_settings.mapping[account_idx] # Account mapping
     ynab_transactions = []                          # Transactions to YNAB
     import_ids = []                                 # Import ids (before last colon) handled so far for this account
+
+
+    # Find transactions that are 'Reserved'
+    try:
+        # Create new transaction
+        api_response = api_instance.get_transactions_by_account(api_settings.budget_id, account_map['account'], since_date=startDate)
+    except ApiException as e:
+        print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
+
+    reserved_transactions = [x for x in api_response.data.transactions if x.memo.split(':')[0] == 'Reserved']
 
     for item in transactions:
         payee_id = None
@@ -77,7 +87,6 @@ for account_idx in range(len(accounts)):
         transaction_ref = ':'.join(transaction.import_id.split(':')[:3])
         if import_ids.count(transaction_ref) > 0:
             transaction.import_id=transaction_ref + ":" + str(import_ids.count(transaction_ref)+1)
-            print(transaction.import_id)
 
         import_ids.append(transaction_ref)
 
@@ -99,9 +108,23 @@ for account_idx in range(len(accounts)):
 
         transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
 
+        # Update Reserved transactions if there are any
+        if len([x for x in reserved_transactions if x.import_id == transaction.import_id]) > 0:
+            reserved_transaction = [x for x in reserved_transactions if x.import_id == transaction.import_id][0]
+            transaction.id = reserved_transaction.id
+            try:
+                # Create new transaction
+                api_response = api_instance.update_transaction(api_settings.budget_id, reserved_transaction.id, {"transaction":transaction} )
+            except ApiException as e:
+                print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
+
+            print(reserved_transaction.memo, transaction.memo)
+
+            continue
+
         if len(account_map['account']) > 2:
             ynab_transactions.append(transaction)
-        
+    
     if len(ynab_transactions) > 0:
 
         try:
