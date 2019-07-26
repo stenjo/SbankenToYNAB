@@ -49,23 +49,33 @@ for mapping in api_settings.mapping:
 
 
 for account_idx in range(len(accounts)):
-    transactions = accounts[account_idx]
-    account_map = api_settings.mapping[account_idx]
-    ynab_transactions = []
+    transactions = accounts[account_idx]            # Transactions from SBanken
+    account_map = api_settings.mapping[account_idx] # Account mapping
+    ynab_transactions = []                          # Transactions to YNAB
+    import_ids = []                                 # Import ids (before last colon) handled so far for this account
+    reserved_transactions = []
 
+    # Find transactions that are 'Reserved'
+    if len(account_map['account']) > 2: # Only fetch YNAB transactions from accounts that are synced in YNAB
+        try:
+            # Get existing transactions that are Reserved in case they need to be updated
+            api_response = api_instance.get_transactions_by_account(api_settings.budget_id, account_map['account'], since_date=startDate)
+        except ApiException as e:
+            print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
+
+        reserved_transactions = [x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(':')[0] == 'Reserved')]
+        
     for item in transactions:
         payee_id = None
         if api_settings.includeReservedTransactions != True:
             if item['isReservation'] == True:
-                pass
+                continue
 
         try:
             payee_name = getPayee(item)
          # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
-        except ValueError as e:
-            # We hop over transaction that has no payee so far
-            print ("Didn't managed to get payee for transaction {}. Error message was {}".format(item, str(e)))
-            continue
+        except ValueError:
+            pass
         transaction = ynab.TransactionDetail(
             date=getYnabTransactionDate(item), 
             amount=getIntAmountMilli(item), 
@@ -77,6 +87,14 @@ for account_idx in range(len(accounts)):
         )
         transaction.payee_name = payee_name
 
+        # Change import_id if same amount on same day several times
+        transaction_ref = ':'.join(transaction.import_id.split(':')[:3])
+        if import_ids.count(transaction_ref) > 0:
+            transaction.import_id=transaction_ref + ":" + str(import_ids.count(transaction_ref)+1)
+
+        import_ids.append(transaction_ref)
+
+        # Handle transactions between accounts both kept in YNAB
         if item['transactionTypeCode'] == 200: # Transfer between own accounts
             payee = findMatchingTransfer(account_map['ID'], item, accounts, api_settings.mapping)
             if payee != None:
@@ -94,10 +112,21 @@ for account_idx in range(len(accounts)):
 
         transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
 
+        # Update Reserved transactions if there are any
+        if len([x for x in reserved_transactions if x.import_id == transaction.import_id]) > 0:
+            reserved_transaction = [x for x in reserved_transactions if x.import_id == transaction.import_id][0]
+            transaction.id = reserved_transaction.id
+            try:
+                # Update existing transaction
+                api_response = api_instance.update_transaction(api_settings.budget_id, reserved_transaction.id, {"transaction":transaction} )
+            except ApiException as e:
+                print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
+
+            continue    # Do not create a transaction that is updated
+
         if len(account_map['account']) > 2:
             ynab_transactions.append(transaction)
-
-
+    
     if len(ynab_transactions) > 0:
 
         try:
