@@ -163,7 +163,12 @@ def getPayee(transaction):
         # print(transaction['text'])
         res = payee.capitalize()
     elif transaction['transactionTypeCode'] == 714 and not transaction['cardDetailsSpecified']:
-        raise ValueError ("Visa transfer has no card details specified so far.")
+        # Trying to extract payee from transaction text
+        payee = transaction['text'].split(" ")
+        payee = payee [4:] # Cutting away card num, date, currency and amount
+        payee = payee [:2] # Cutting away exchange rate
+        payee = " ".join (payee) # Joining string back
+        res = payee.capitalize()
     elif transaction['transactionTypeCode'] == 561:   # Varekjøp
         payee = transaction['text'].split(' ')
         #print(transaction)
