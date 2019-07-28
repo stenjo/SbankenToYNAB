@@ -36,12 +36,16 @@ startDate = today - datetime.timedelta(6)   # Last 5 days
 
 accounts = []
 for mapping in api_settings.mapping:
-    accounts.append(get_transactions_period(
-        http_session, 
-        api_settings.CUSTOMERID,
-        mapping['ID'],
-        startDate,
-        endDate))
+    try:
+        accounts.append(get_transactions_period(
+            http_session, 
+            api_settings.CUSTOMERID,
+            mapping['ID'],
+            startDate,
+            endDate))
+    except RuntimeError as e: # We skip an account if there was error talking to it
+        print ("Failed to append an account {}. Error message was ".format(mapping, str(e)))
+        continue
 
 
 for account_idx in range(len(accounts)):
@@ -71,8 +75,8 @@ for account_idx in range(len(accounts)):
             payee_name = getPayee(item)
          # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
         except ValueError:
-            pass
-        
+            print ("Didn't managed to get payee for transaction {}. Error message was {}".format(item, str(e)))
+            continue
         transaction = ynab.TransactionDetail(
             date=getYnabTransactionDate(item), 
             amount=getIntAmountMilli(item), 
