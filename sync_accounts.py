@@ -47,7 +47,6 @@ for mapping in api_settings.mapping:
         print ("Failed to append an account {}. Error message was ".format(mapping, str(e)))
         continue
 
-
 for account_idx in range(len(accounts)):
     transactions = accounts[account_idx]            # Transactions from SBanken
     account_map = api_settings.mapping[account_idx] # Account mapping
@@ -64,7 +63,8 @@ for account_idx in range(len(accounts)):
             print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
 
         reserved_transactions = [x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(':')[0] == 'Reserved')]
-        
+        vipps_transactions =    [x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(' ')[0] == 'Vipps')]
+
     for item in transactions:
         payee_id = None
         if api_settings.includeReservedTransactions != True:
@@ -113,13 +113,20 @@ for account_idx in range(len(accounts)):
 
         transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
 
-        # Update Reserved transactions if there are any
-        if len([x for x in reserved_transactions if x.import_id == transaction.import_id]) > 0:
-            reserved_transaction = [x for x in reserved_transactions if x.import_id == transaction.import_id][0]
-            transaction.id = reserved_transaction.id
+        # Update Reserved and Vipps transactions if there are any
+        reserved    = [x for x in reserved_transactions if x.import_id == transaction.import_id]
+        vipps       = [x for x in vipps_transactions if x.import_id == transaction.import_id]
+
+        if len(reserved) > 0:
+            transaction.id = reserved[0].id
+
+        if len(vipps) > 0:
+            transaction.id = vipps[0].id
+
+        if len(vipps) > 0 or len(reserved) > 0:
             try:
                 # Update existing transaction
-                api_response = api_instance.update_transaction(api_settings.budget_id, reserved_transaction.id, {"transaction":transaction} )
+                api_response = api_instance.update_transaction(api_settings.budget_id, transaction.id, {"transaction":transaction} )
             except ApiException as e:
                 print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
 

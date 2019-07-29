@@ -147,6 +147,8 @@ def getPayee(transaction):
     res = bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
     if transaction['transactionTypeCode'] == 752:   # renter
         res = 'Sbanken'
+    elif transaction['transactionTypeCode'] == 962:   # Vipps straksbet.
+        return transaction['transactionType']
     elif transaction['transactionTypeCode'] == 709 or transaction['transactionTypeCode'] == 73:   # Varer
         payee = transaction['text'].split(' ')
         if payee[0] == 'KORREKSJON':
@@ -200,17 +202,22 @@ def getMemo(transaction):
     if transaction['isReservation'] == True:
         isReservation = 'Reserved: '
 
-    if transaction['transactionTypeCode'] == 710:   # Varekjøp
-        return isReservation + transaction['text'].split(' ',1)[1].capitalize() + transactionId
+    transactionMemo = ''
+
+    if transaction['transactionTypeCode'] == 962:   # Vipps straksbet.
+        transactionMemo = 'Vipps ' + transaction['text']
+        isReservation = ''
+    elif transaction['transactionTypeCode'] == 710:   # Varekjøp
+        transactionMemo = transaction['text'].split(' ',1)[1].capitalize()
     elif transaction['transactionTypeCode'] == 714: # Visa vare
-        return isReservation + transaction['text'].split(' ',2)[2].capitalize() + transactionId
+        transactionMemo = transaction['text'].split(' ',2)[2].capitalize()
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['amount'] > 0:
-            return isReservation + 'Overføring fra annen egen konto'
+            transactionMemo = 'Overføring fra annen egen konto'
         else:
-            return isReservation + 'Overføring til annen egen konto'
+            transactionMemo = 'Overføring til annen egen konto'
  
-    return isReservation + transaction['text'].capitalize() + transactionId
+    return isReservation + transactionMemo + transactionId
 
 def getOut(transaction):
     if transaction['amount'] < 0.0:
