@@ -216,6 +216,10 @@ def getMemo(transaction):
             transactionMemo = 'Overføring fra annen egen konto'
         else:
             transactionMemo = 'Overføring til annen egen konto'
+    elif transaction['transactionTypeText'] == 'STROF':
+        transactionMemo = transaction['transactionType'].capitalize()
+    else:
+        transactionMemo = transaction['text'].capitalize()
  
     return isReservation + transactionMemo + transactionId
 
