@@ -171,12 +171,15 @@ def getPayee(transaction):
         payee = payee [:2] # Cutting away exchange rate
         payee = " ".join (payee) # Joining string back
         res = payee.capitalize()
+    elif transaction['transactionTypeText'] == 'STROF':
+        res = transaction['text'].capitalize()
     elif transaction['transactionTypeCode'] == 561:   # Varekjøp
         payee = transaction['text'].split(' ')
         #print(transaction)
         if len(payee) < 2:
-            return transaction['transactionType']
-        return (payee[1]+ ' ' + payee[2]).capitalize()
+            res = transaction['transactionType'].capitalize()
+        else:
+            res = (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['otherAccountNumberSpecified'] == True:
             pprint.pprint(transaction)
@@ -204,7 +207,7 @@ def getMemo(transaction):
 
     transactionMemo = ''
 
-    if transaction['transactionTypeCode'] == 962:   # Vipps straksbet.
+    if transaction['transactionTypeCode'] == 962 or transaction['transactionType'].split(' ',)[0] == 'Vipps':   # Vipps straksbet.
         transactionMemo = 'Vipps ' + transaction['text']
         isReservation = ''
     elif transaction['transactionTypeCode'] == 710:   # Varekjøp
