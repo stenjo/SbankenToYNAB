@@ -47,6 +47,9 @@ for mapping in api_settings.mapping:
         print ("Failed to append an account {}. Error message was ".format(mapping, str(e)))
         continue
 
+# pprint(accounts[0])
+# exit(0)
+
 for account_idx in range(len(accounts)):
     transactions = accounts[account_idx]            # Transactions from SBanken
     account_map = api_settings.mapping[account_idx] # Account mapping
@@ -65,6 +68,8 @@ for account_idx in range(len(accounts)):
         reserved_transactions = [x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(':')[0] == 'Reserved')]
         vipps_transactions =    [x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(' ')[0] == 'Vipps')]
 
+        # pprint([x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(' ')[0] == 'Overføring')])
+
     for item in transactions:
         payee_id = None
         if api_settings.includeReservedTransactions != True:
@@ -77,6 +82,7 @@ for account_idx in range(len(accounts)):
         except ValueError:
             print ("Didn't managed to get payee for transaction {}. Error message was {}".format(item, str(e)))
             continue
+
         transaction = ynab.TransactionDetail(
             date=getYnabTransactionDate(item), 
             amount=getIntAmountMilli(item), 
@@ -99,7 +105,7 @@ for account_idx in range(len(accounts)):
         if item['transactionTypeCode'] == 200: # Transfer between own accounts
             payee = findMatchingTransfer(account_map['ID'], item, accounts, api_settings.mapping)
             if payee != None:
-                payee_id = payee['Account']
+                payee_id = payee['account']
                 payee_id if payee_id != '' else None
                 payee_name = payee['Name'] if payee_id == None else None
                 transaction.memo += ': '+payee['Name']
@@ -110,12 +116,15 @@ for account_idx in range(len(accounts)):
                     transaction.payee_name += 'to: '
 
                 transaction.payee_name += payee['Name']
+                transaction.transfer_account_id = payee['account']
 
         transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
 
         # Update Reserved and Vipps transactions if there are any
         reserved    = [x for x in reserved_transactions if x.import_id == transaction.import_id]
         vipps       = [x for x in vipps_transactions if x.import_id == transaction.import_id]
+
+        # pprint(transaction.date, transaction.payee_name, transaction.memo)
 
         if len(reserved) > 0:
             transaction.id = reserved[0].id

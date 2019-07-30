@@ -148,7 +148,7 @@ def getPayee(transaction):
     if transaction['transactionTypeCode'] == 752:   # renter
         res = 'Sbanken'
     elif transaction['transactionTypeCode'] == 962 or transaction['transactionType'].split(' ')[0] == 'Vipps':   # Vipps straksbet.
-        return transaction['transactionType']
+        res = transaction['transactionType']
     elif transaction['transactionTypeCode'] == 709 or transaction['transactionTypeCode'] == 73:   # Varer
         payee = transaction['text'].split(' ')
         if payee[0] == 'KORREKSJON':
@@ -209,7 +209,6 @@ def getMemo(transaction):
 
     if transaction['transactionTypeCode'] == 962 or transaction['transactionType'].split(' ')[0] == 'Vipps':   # Vipps straksbet.
         transactionMemo = 'Vipps ' + transaction['text'].capitalize()
-        isReservation = ''
     elif transaction['transactionTypeCode'] == 710:   # Varekjøp
         transactionMemo = transaction['text'].split(' ',1)[1].capitalize()
     elif transaction['transactionTypeCode'] == 714: # Visa vare
