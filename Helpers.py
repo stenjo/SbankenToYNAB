@@ -147,7 +147,7 @@ def getPayee(transaction):
     res = bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
     if transaction['transactionTypeCode'] == 752:   # renter
         res = 'Sbanken'
-    elif transaction['transactionTypeCode'] == 962:   # Vipps straksbet.
+    elif transaction['transactionTypeCode'] == 962 or transaction['transactionType'].split(' ')[0] == 'Vipps':   # Vipps straksbet.
         return transaction['transactionType']
     elif transaction['transactionTypeCode'] == 709 or transaction['transactionTypeCode'] == 73:   # Varer
         payee = transaction['text'].split(' ')
@@ -207,8 +207,8 @@ def getMemo(transaction):
 
     transactionMemo = ''
 
-    if transaction['transactionTypeCode'] == 962 or transaction['transactionType'].split(' ',)[0] == 'Vipps':   # Vipps straksbet.
-        transactionMemo = 'Vipps ' + transaction['text']
+    if transaction['transactionTypeCode'] == 962 or transaction['transactionType'].split(' ')[0] == 'Vipps':   # Vipps straksbet.
+        transactionMemo = 'Vipps ' + transaction['text'].capitalize()
         isReservation = ''
     elif transaction['transactionTypeCode'] == 710:   # Varekjøp
         transactionMemo = transaction['text'].split(' ',1)[1].capitalize()
