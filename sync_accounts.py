@@ -105,7 +105,7 @@ for account_idx in range(len(accounts)):
         if item['transactionTypeCode'] == 200: # Transfer between own accounts
             payee = findMatchingTransfer(account_map['ID'], item, accounts, api_settings.mapping)
             if payee != None:
-                payee_id = payee['account']
+                payee_id = payee['account'] if payee['account'] != None else None
                 payee_id if payee_id != '' else None
                 payee_name = payee['Name'] if payee_id == None else None
                 transaction.memo += ': '+payee['Name']
@@ -116,7 +116,8 @@ for account_idx in range(len(accounts)):
                     transaction.payee_name += 'to: '
 
                 transaction.payee_name += payee['Name']
-                transaction.transfer_account_id = payee['account']
+                if payee_id != None:
+                    transaction.transfer_account_id = payee_id
 
         transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
 
