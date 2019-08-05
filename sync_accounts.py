@@ -36,26 +36,22 @@ startDate = today - datetime.timedelta(6)   # Last 5 days
 
 accounts = []
 for mapping in api_settings.mapping:
-    try:
-        accounts.append(get_transactions_period(
-            http_session, 
-            api_settings.CUSTOMERID,
-            mapping['ID'],
-            startDate,
-            endDate))
-    except RuntimeError as e: # We skip an account if there was error talking to it
-        print ("Failed to append an account {}. Error message was ".format(mapping, str(e)))
-        continue
+    accounts.append(get_transactions_period(
+        http_session, 
+        api_settings.CUSTOMERID,
+        mapping['ID'],
+        startDate,
+        endDate))
 
-# pprint(accounts[0])
-# exit(0)
 
 for account_idx in range(len(accounts)):
     transactions = accounts[account_idx]            # Transactions from SBanken
     account_map = api_settings.mapping[account_idx] # Account mapping
     ynab_transactions = []                          # Transactions to YNAB
+    ynab_updates = []                               # Transactions to be updated in YNAB
     import_ids = []                                 # Import ids (before last colon) handled so far for this account
     reserved_transactions = []
+    existing_transactions = []
 
     # Find transactions that are 'Reserved'
     if len(account_map['account']) > 2: # Only fetch YNAB transactions from accounts that are synced in YNAB
@@ -66,9 +62,7 @@ for account_idx in range(len(accounts)):
             print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
 
         reserved_transactions = [x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(':')[0] == 'Reserved')]
-        vipps_transactions =    [x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(' ')[0] == 'Vipps')]
-
-        # pprint([x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(' ')[0] == 'Overføring')])
+        existing_transactions = api_response.data.transactions
 
     for item in transactions:
         payee_id = None
@@ -80,9 +74,8 @@ for account_idx in range(len(accounts)):
             payee_name = getPayee(item)
          # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
         except ValueError:
-            print ("Didn't managed to get payee for transaction {}. Error message was {}".format(item, str(e)))
-            continue
-
+            pass
+        
         transaction = ynab.TransactionDetail(
             date=getYnabTransactionDate(item), 
             amount=getIntAmountMilli(item), 
@@ -105,8 +98,7 @@ for account_idx in range(len(accounts)):
         if item['transactionTypeCode'] == 200: # Transfer between own accounts
             payee = findMatchingTransfer(account_map['ID'], item, accounts, api_settings.mapping)
             if payee != None:
-                # pprint(payee)
-                payee_id = payee['Account'] if payee['Account'] != None else None
+                payee_id = payee['Account']
                 payee_id if payee_id != '' else None
                 payee_name = payee['Name'] if payee_id == None else None
                 transaction.memo += ': '+payee['Name']
@@ -117,39 +109,39 @@ for account_idx in range(len(accounts)):
                     transaction.payee_name += 'to: '
 
                 transaction.payee_name += payee['Name']
-                if payee_id != None:
-                    transaction.transfer_account_id = payee_id
-                
+
         transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
 
-        # Update Reserved and Vipps transactions if there are any
+        # Update Reserved transactions if there are any
         reserved    = [x for x in reserved_transactions if x.import_id == transaction.import_id]
-        vipps       = [x for x in vipps_transactions if x.import_id == transaction.import_id]
-
-        # pprint(transaction.date, transaction.payee_name, transaction.memo)
+        updated     = [x for x in existing_transactions if x.import_id == transaction.import_id]
 
         if len(reserved) > 0:
-            transaction.id = reserved[0].id
-
-        if len(vipps) > 0:
-            transaction.id = vipps[0].id
-
-        if len(vipps) > 0 or len(reserved) > 0:
+            reserved_transaction = reserved[0]
+            transaction.id = reserved_transaction.id
             try:
                 # Update existing transaction
-                api_response = api_instance.update_transaction(api_settings.budget_id, transaction.id, {"transaction":transaction} )
+                api_response = api_instance.update_transaction(api_settings.budget_id, reserved_transaction.id, {"transaction":transaction} )
             except ApiException as e:
-                print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
+                print("Exception when calling TransactionsApi->update_transaction: %s\n" % e)
 
-            continue    # Do not create a transaction that is updated
+        else if len(updated) > 0:
+            update_transaction = updated[0]
+            transaction.id = update_transaction.id
+            ynab_updates.append(transaction)
 
-        if len(account_map['account']) > 2:
+        else if len(account_map['account']) > 2:
             ynab_transactions.append(transaction)
     
     if len(ynab_transactions) > 0:
-
         try:
             # Create new transaction
             api_response = api_instance.create_transaction(api_settings.budget_id, {"transactions":ynab_transactions})
         except ApiException as e:
             print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
+
+    if len(ynab_updates) > 0:
+        try:
+            api_response = api_instance.update_transaction(api_settings.budget_id, reserved_transaction.id, {"transactions":ynab_updates} )
+            except ApiException as e:
+                print("Exception when calling TransactionsApi->update_transaction: %s\n" % e)
