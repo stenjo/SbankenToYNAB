@@ -188,6 +188,18 @@ def get_transactions(http_session: requests.Session, customerid, account_id, mon
 
 
 def get_transactions_year(http_session: requests.Session, customerid, account_id, year):
+    """
+    Get transactions from a full year
+    
+    Args:
+        http_session (requests.Session): Current session
+        customerid (string): Id of the customer
+        account_id (string): Id of the account
+        year (int): The year 
+    
+    Returns:
+        array: Transactions from jan 1st to dec 31st the given year
+    """
     today = datetime.date.today()
     endDate = datetime.date(year, 12, 31)
     if today < endDate:
@@ -198,6 +210,15 @@ def get_transactions_year(http_session: requests.Session, customerid, account_id
     return get_transactions_period(http_session, customerid, account_id, startDate, endDate)
 
 def getTransactionDate(transaction):
+    """
+    Extract the transaction date from an SBanken transaction
+    
+    Args:
+        transaction (object): Transaction from a transaction list
+    
+    Returns:
+        string: Transaction date in the format DD.MM.YYYY
+    """
     # d = datetime.datetime.fromisoformat(transaction['interestDate'])
     d = datetime.datetime.strptime(transaction['interestDate'].split('T')[0], "%Y-%m-%d")
     code = transaction['transactionTypeCode']
@@ -216,6 +237,15 @@ def getTransactionDate(transaction):
     return d.strftime('%d.%m.%Y')
 
 def getYnabTransactionDate(transaction):
+    """
+    Extract transaction date from an SBanken transaction and return this in a YNAB format
+    
+    Args:
+        transaction (object): Transaction from a transaction list
+    
+    Returns:
+        string: Transaction date in the format YYYY-MM-DD
+    """
     if 'beneficiaryName' in transaction:
         d = datetime.datetime.strptime(getPaymentsDate(transaction), "%d.%m.%Y")
         return d.strftime('%Y-%m-%d')
@@ -225,6 +255,19 @@ def getYnabTransactionDate(transaction):
 
 
 def getPayee(transaction):
+    """
+    Extract the Payee name from an SBanken transaction. The best guess of the Payee based on information in the 
+    transaction object. Where and what may be very dependant on the transaction content and type.
+    
+    Args:
+        transaction (object): Transaction from a transaction list
+    
+    Raises:
+        ValueError: Exception if unable to extract payee
+    
+    Returns:
+        string: Payee
+    """
     res = bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
     if transaction['transactionTypeCode'] == 752:   # renter
         res = 'Sbanken'
