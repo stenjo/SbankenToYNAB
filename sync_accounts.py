@@ -9,15 +9,14 @@ from  Helpers import create_authenticated_http_session,get_accounts,get_transact
 
 
 def findMatchingTransfer(original_account, transaction, accounts_transactions_list, accounts, account_references):
+    
     compare = transaction.copy()
     compare['amount'] = transaction['amount'] * -1
     for account_idx in range(len(accounts)):
         if accounts[account_idx]['ID'] != original_account:
             for t in accounts_transactions_list[account_idx]:
                 if getYnabSyncId(t) == getYnabSyncId(compare):
-                    # return accounts[account_idx]
                     reference = [a for a in account_references if a.id == accounts[account_idx]['account']][0]
-                    # pprint(reference)
                     d = {}
                     d['Name'] = accounts[account_idx]['Name']
                     d['account'] = accounts[account_idx]['account']
@@ -43,6 +42,7 @@ today = datetime.date.today()
 endDate = today
 startDate = today - datetime.timedelta(5)   # Last 5 days
 
+# Get the transactions for all accounts
 accounts = []
 for mapping in api_settings.mapping:
     accounts.append(get_transactions_period(
@@ -60,8 +60,8 @@ except ApiException as e:
     print("Exception when calling AccountsApi->get_accounts: %s\n" % e)
 
 ynab_accounts = api_response.data.accounts
-#pprint(ynab_accounts)
 
+# Loop through all batches of transactions for all accounts
 for account_idx in range(len(accounts)):
     transactions = accounts[account_idx]            # Transactions from SBanken
     account_map = api_settings.mapping[account_idx] # Account mapping
@@ -79,76 +79,68 @@ for account_idx in range(len(accounts)):
             print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
 
         existing_transactions = api_response.data.transactions
-        
 
-    # Get the payee_id of the current account
-    # if len(existing_transactions) > 0 and 'payee_id' not in account_map:
-    #     account_map['payee_id'] = existing_transactions[0].payee_id
-    #     print("payee_id is missing from the following account. Please update api_settings.py")
-    #     pprint(account_map)
-
-    for item in transactions:
+    # Loop through all transactions        
+    for transaction_item in transactions:
         payee_id = None
         if api_settings.includeReservedTransactions != True:
-            if item['isReservation'] == True:
+            if transaction_item['isReservation'] == True:
                 continue
 
         try:
-            payee_name = getPayee(item)
+            payee_name = getPayee(transaction_item)
          # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
         except ValueError:
             pass
         
-        transaction = ynab.TransactionDetail(
-            date=getYnabTransactionDate(item), 
-            amount=getIntAmountMilli(item), 
+        ynab_transaction = ynab.TransactionDetail(
+            date=getYnabTransactionDate(transaction_item), 
+            amount=getIntAmountMilli(transaction_item), 
             cleared='uncleared', 
             approved=False, 
             account_id=account_map['account'],
-            memo=getMemo(item),
-            import_id=getYnabSyncId(item)
+            memo=getMemo(transaction_item),
+            import_id=getYnabSyncId(transaction_item)
         )
-        transaction.payee_name = payee_name
+        ynab_transaction.payee_name = payee_name
 
         # Change import_id if same amount on same day several times
-        transaction_ref = ':'.join(transaction.import_id.split(':')[:3])
+        transaction_ref = ':'.join(ynab_transaction.import_id.split(':')[:3])
         if import_ids.count(transaction_ref) > 0:
-            transaction.import_id=transaction_ref + ":" + str(import_ids.count(transaction_ref)+1)
+            ynab_transaction.import_id=transaction_ref + ":" + str(import_ids.count(transaction_ref)+1)
 
         import_ids.append(transaction_ref)
 
         # Handle transactions between accounts both kept in YNAB
-        if item['transactionTypeCode'] == 200: # Transfer between own accounts
-            payee = findMatchingTransfer(account_map['ID'], item, accounts, api_settings.mapping, ynab_accounts)
+        if transaction_item['transactionTypeCode'] == 200: # Transfer between own accounts
+            payee = findMatchingTransfer(account_map['ID'], transaction_item, accounts, api_settings.mapping, ynab_accounts)
             if payee != None:
-                # pprint(payee)
                 if 'payee_id' in payee:
-                    transaction.payee_id = payee['payee_id']
-                    transaction.payee_name = None
+                    ynab_transaction.payee_id = payee['payee_id']
+                    ynab_transaction.payee_name = None
                 else:
-                    transaction.payee_name = 'Transfer '
+                    ynab_transaction.payee_name = 'Transfer '
 
-                    if transaction.amount > 0:
-                        transaction.payee_name += 'from: '
+                    if ynab_transaction.amount > 0:
+                        ynab_transaction.payee_name += 'from: '
                     else:
-                        transaction.payee_name += 'to: '
-                    transaction.payee_name += payee['Name']
+                        ynab_transaction.payee_name += 'to: '
+                    ynab_transaction.payee_name += payee['Name']
 
-                transaction.memo += ': '+payee['Name']
-                # pprint(transaction)
+                ynab_transaction.memo += ': '+payee['Name']
         else:
-            transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
+            ynab_transaction.payee_name = (ynab_transaction.payee_name[:45] + '...') if len(ynab_transaction.payee_name) > 49 else ynab_transaction.payee_name
 
         # Update existing transactions if there are any
-        updated     = [x for x in existing_transactions if x.import_id == transaction.import_id]
+        updated     = [x for x in existing_transactions if x.import_id == ynab_transaction.import_id]
 
         if len(updated) > 0:                  # Existing transactions to be updated
             update_transaction = updated[0]
-            transaction.id = update_transaction.id
-            ynab_updates.append(transaction)
+            ynab_transaction.id = update_transaction.id
+            ynab_updates.append(ynab_transaction)
 
         elif len(account_map['account']) > 2:   # New transactions not yet in YNAB
-            ynab_transactions.append(transaction)
+            ynab_transactions.append(ynab_transaction)
     
     if len(ynab_transactions) > 0:
         try:
