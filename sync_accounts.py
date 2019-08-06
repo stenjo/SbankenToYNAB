@@ -50,10 +50,9 @@ for account_idx in range(len(accounts)):
     ynab_transactions = []                          # Transactions to YNAB
     ynab_updates = []                               # Transactions to be updated in YNAB
     import_ids = []                                 # Import ids (before last colon) handled so far for this account
-    reserved_transactions = []
     existing_transactions = []
 
-    # Find transactions that are 'Reserved'
+    # Find existing transactions
     if len(account_map['account']) > 2: # Only fetch YNAB transactions from accounts that are synced in YNAB
         try:
             # Get existing transactions that are Reserved in case they need to be updated
@@ -61,7 +60,6 @@ for account_idx in range(len(accounts)):
         except ApiException as e:
             print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
 
-        reserved_transactions = [x for x in api_response.data.transactions if (x.memo != None) and (x.memo.split(':')[0] == 'Reserved')]
         existing_transactions = api_response.data.transactions
 
     for item in transactions:
@@ -112,25 +110,15 @@ for account_idx in range(len(accounts)):
 
         transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
 
-        # Update Reserved transactions if there are any
-        reserved    = [x for x in reserved_transactions if x.import_id == transaction.import_id]
+        # Update existing transactions if there are any
         updated     = [x for x in existing_transactions if x.import_id == transaction.import_id]
 
-        if len(reserved) > 0:
-            reserved_transaction = reserved[0]
-            transaction.id = reserved_transaction.id
-            try:
-                # Update existing transaction
-                api_response = api_instance.update_transaction(api_settings.budget_id, reserved_transaction.id, {"transaction":transaction} )
-            except ApiException as e:
-                print("Exception when calling TransactionsApi->update_transaction: %s\n" % e)
-
-        elif len(updated) > 0:
+        if len(updated) > 0:                  # Existing transactions to be updated
             update_transaction = updated[0]
             transaction.id = update_transaction.id
             ynab_updates.append(transaction)
 
-        elif len(account_map['account']) > 2:
+        elif len(account_map['account']) > 2:   # New transactions not yet in YNAB
             ynab_transactions.append(transaction)
     
     if len(ynab_transactions) > 0:
