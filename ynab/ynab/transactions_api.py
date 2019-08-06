@@ -901,7 +901,7 @@ class TransactionsApi(object):
             (data) = self.update_transactions_with_http_info(budget_id, transactions, **kwargs)  # noqa: E501
             return data
 
-    def update_transaction_with_http_info(self, budget_id, transaction_id, transaction, **kwargs):  # noqa: E501
+    def update_transactions_with_http_info(self, budget_id, transactions, **kwargs):  # noqa: E501
         """Updates an existing transaction  # noqa: E501
 
         Updates a transaction  # noqa: E501

@@ -125,12 +125,12 @@ for account_idx in range(len(accounts)):
             except ApiException as e:
                 print("Exception when calling TransactionsApi->update_transaction: %s\n" % e)
 
-        else if len(updated) > 0:
+        elif len(updated) > 0:
             update_transaction = updated[0]
             transaction.id = update_transaction.id
             ynab_updates.append(transaction)
 
-        else if len(account_map['account']) > 2:
+        elif len(account_map['account']) > 2:
             ynab_transactions.append(transaction)
     
     if len(ynab_transactions) > 0:
@@ -142,6 +142,6 @@ for account_idx in range(len(accounts)):
 
     if len(ynab_updates) > 0:
         try:
-            api_response = api_instance.update_transaction(api_settings.budget_id, reserved_transaction.id, {"transactions":ynab_updates} )
-            except ApiException as e:
+            api_response = api_instance.update_transactions(api_settings.budget_id, {"transactions":ynab_updates} )
+        except ApiException as e:
                 print("Exception when calling TransactionsApi->update_transaction: %s\n" % e)
