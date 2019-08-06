@@ -39,7 +39,8 @@ class Account(object):
         'note': 'str',
         'balance': 'float',
         'cleared_balance': 'float',
-        'uncleared_balance': 'float'
+        'uncleared_balance': 'float',
+        'transfer_payee_id': 'str'
     }
 
     attribute_map = {
@@ -51,10 +52,11 @@ class Account(object):
         'note': 'note',
         'balance': 'balance',
         'cleared_balance': 'cleared_balance',
-        'uncleared_balance': 'uncleared_balance'
+        'uncleared_balance': 'uncleared_balance',
+        'transfer_payee_id': 'transfer_payee_id'
     }
 
-    def __init__(self, id=None, name=None, type=None, on_budget=None, closed=None, note=None, balance=None, cleared_balance=None, uncleared_balance=None):  # noqa: E501
+    def __init__(self, id=None, name=None, type=None, on_budget=None, closed=None, note=None, balance=None, cleared_balance=None, uncleared_balance=None, transfer_payee_id=None):  # noqa: E501
         """Account - a model defined in Swagger"""  # noqa: E501
 
         self._id = None
@@ -66,6 +68,7 @@ class Account(object):
         self._balance = None
         self._cleared_balance = None
         self._uncleared_balance = None
+        self._transfer_payee_id = None
         self.discriminator = None
 
         self.id = id
@@ -77,7 +80,19 @@ class Account(object):
         self.balance = balance
         self.cleared_balance = cleared_balance
         self.uncleared_balance = uncleared_balance
+        self.transfer_payee_id = transfer_payee_id
 
+    @property 
+    def transfer_payee_id(self):
+        return self._transfer_payee_id
+
+    @transfer_payee_id.setter
+    def transfer_payee_id(self, transfer_payee_id):
+        if transfer_payee_id is None:
+            raise ValueError("Invalid value for 'transfer_payee_id', must not be None")
+
+        self._transfer_payee_id = transfer_payee_id
+        
     @property
     def id(self):
         """Gets the id of this Account.  # noqa: E501

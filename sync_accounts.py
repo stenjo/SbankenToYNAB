@@ -8,16 +8,24 @@ from pprint import pprint
 from  Helpers import create_authenticated_http_session,get_accounts,get_transactions,getTransactionDate,getPayee,getMemo, getOut, getIn,getIntAmountMilli,getYnabTransactionDate,get_transactions_period,getYnabSyncId
 
 
-def findMatchingTransfer(original_account, transaction, accounts_transactions_list, accounts):
+def findMatchingTransfer(original_account, transaction, accounts_transactions_list, accounts, account_references):
     compare = transaction.copy()
     compare['amount'] = transaction['amount'] * -1
     for account_idx in range(len(accounts)):
         if accounts[account_idx]['ID'] != original_account:
             for t in accounts_transactions_list[account_idx]:
                 if getYnabSyncId(t) == getYnabSyncId(compare):
+                    # return accounts[account_idx]
+                    reference = [a for a in account_references if a.id == accounts[account_idx]['account']][0]
+                    # pprint(reference)
                     d = {}
                     d['Name'] = accounts[account_idx]['Name']
-                    d['Account'] = accounts[account_idx]['account']
+                    d['account'] = accounts[account_idx]['account']
+                    if hasattr(reference, 'transfer_payee_id'):
+                        d['payee_id'] = reference.transfer_payee_id
+                    else:
+                        d['payee_id'] = None
+
                     return d
 
 # Configure API key authorization: bearer
@@ -27,12 +35,13 @@ configuration.api_key_prefix['Authorization'] = 'Bearer'
 
 # create an instance of the API class
 api_instance = ynab.TransactionsApi(ynab.ApiClient(configuration))
+api_accounts = ynab.AccountsApi(ynab.ApiClient(configuration))
 
 #SBanken auth
 http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
 today = datetime.date.today()
 endDate = today
-startDate = today - datetime.timedelta(6)   # Last 5 days
+startDate = today - datetime.timedelta(5)   # Last 5 days
 
 accounts = []
 for mapping in api_settings.mapping:
@@ -43,6 +52,15 @@ for mapping in api_settings.mapping:
         startDate,
         endDate))
 
+# Find ynab accounts
+try:
+    # Get existing accounts for the budget
+    api_response = api_accounts.get_accounts(api_settings.budget_id)
+except ApiException as e:
+    print("Exception when calling AccountsApi->get_accounts: %s\n" % e)
+
+ynab_accounts = api_response.data.accounts
+#pprint(ynab_accounts)
 
 for account_idx in range(len(accounts)):
     transactions = accounts[account_idx]            # Transactions from SBanken
@@ -61,6 +79,13 @@ for account_idx in range(len(accounts)):
             print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
 
         existing_transactions = api_response.data.transactions
+        
+
+    # Get the payee_id of the current account
+    # if len(existing_transactions) > 0 and 'payee_id' not in account_map:
+    #     account_map['payee_id'] = existing_transactions[0].payee_id
+    #     print("payee_id is missing from the following account. Please update api_settings.py")
+    #     pprint(account_map)
 
     for item in transactions:
         payee_id = None
@@ -94,21 +119,25 @@ for account_idx in range(len(accounts)):
 
         # Handle transactions between accounts both kept in YNAB
         if item['transactionTypeCode'] == 200: # Transfer between own accounts
-            payee = findMatchingTransfer(account_map['ID'], item, accounts, api_settings.mapping)
+            payee = findMatchingTransfer(account_map['ID'], item, accounts, api_settings.mapping, ynab_accounts)
             if payee != None:
-                payee_id = payee['Account']
-                payee_id if payee_id != '' else None
-                payee_name = payee['Name'] if payee_id == None else None
-                transaction.memo += ': '+payee['Name']
-                transaction.payee_name = 'Transfer '
-                if transaction.amount > 0:
-                    transaction.payee_name += 'from: '
+                # pprint(payee)
+                if 'payee_id' in payee:
+                    transaction.payee_id = payee['payee_id']
+                    transaction.payee_name = None
                 else:
-                    transaction.payee_name += 'to: '
+                    transaction.payee_name = 'Transfer '
 
-                transaction.payee_name += payee['Name']
+                    if transaction.amount > 0:
+                        transaction.payee_name += 'from: '
+                    else:
+                        transaction.payee_name += 'to: '
+                    transaction.payee_name += payee['Name']
 
-        transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
+                transaction.memo += ': '+payee['Name']
+                # pprint(transaction)
+        else:
+            transaction.payee_name = (transaction.payee_name[:45] + '...') if len(transaction.payee_name) > 49 else transaction.payee_name
 
         # Update existing transactions if there are any
         updated     = [x for x in existing_transactions if x.import_id == transaction.import_id]
