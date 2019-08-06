@@ -30,6 +30,19 @@ def create_authenticated_http_session(client_id, client_secret) -> requests.Sess
 
 
 def get_customer_information(http_session: requests.Session, customerid):
+    """
+    Get customer information SBanken given by the customerid
+    
+    Args:
+        http_session (requests.Session): [description]
+        customerid ([type]): [description]
+    
+    Raises:
+        RuntimeError: [description]
+    
+    Returns:
+        [type]: [description]
+    """
     response_object = http_session.get(
         "https://api.sbanken.no/exec.customers/api/v1/Customers",
         headers={'customerId': customerid}
@@ -45,11 +58,24 @@ def get_customer_information(http_session: requests.Session, customerid):
 
 
 def get_accounts(http_session: requests.Session, customerid):
+    """
+    Fetch all accounts from SBanken based on customerid
+
+    Args:
+        http_session (requests.Session): [description]
+        customerid ([type]): [description]
+    
+    Raises:
+        RuntimeError: [description]
+    
+    Returns:
+        [type]: [description]
+    """
     response = http_session.get(
         "https://api.sbanken.no/exec.bank/api/v1/Accounts",
         headers={'customerId': customerid}
     ).json()
-    #print(response)
+
     if not response["isError"]:
         return response["items"]
     else:
@@ -57,7 +83,23 @@ def get_accounts(http_session: requests.Session, customerid):
 
 
 def get_transactions_period(http_session: requests.Session, customerid, account_id, startDate, endDate):
-    # print(endDate)
+    """
+    Get all transactions from SBanken for a given time period
+    
+    Args:
+        http_session (requests.Session): [description]
+        customerid (string): The customer id of the user
+        account_id (string): The account id where transactions are read
+        startDate (Date): From date
+        endDate (Date): To date
+    
+    Raises:
+        RuntimeError: Error reading from API
+        RuntimeError: 
+            
+    Returns:
+        array: List of transactions
+    """
     queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
     response = http_session.get(queryString
         , headers={'customerId': customerid}
@@ -73,9 +115,22 @@ def get_transactions_period(http_session: requests.Session, customerid, account_
         raise RuntimeError("{} {}, Request was {}".format(response["errorType"], response["errorMessage"], queryString))   
 
 def get_standing_orders(http_session: requests.Session, customerid, account_id):
-
-    print(customerid)
-    print(account_id)
+    """
+    Get all future repeated future payments from SBanken API
+    
+    Args:
+        http_session (requests.Session): Current session
+        customerid (string): Id of the customer
+        account_id (string): Id of the account
+    
+    Raises:
+        RuntimeError: API error
+    
+    Returns:
+        array: List of standing order payments being paid on date 
+    """
+    # print(customerid)
+    # print(account_id)
     response = http_session.get(
         "https://api.sbanken.no/exec.bank/api/v1/StandingOrders/{}".format(account_id),
         headers={'customerId': customerid}
@@ -87,6 +142,20 @@ def get_standing_orders(http_session: requests.Session, customerid, account_id):
         raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
 
 def get_payments(http_session: requests.Session, customerid, account_id):
+    """
+    Get all future payments from SBanken API
+    
+    Args:
+        http_session (requests.Session): Current session
+        customerid (string): ID of the customer
+        account_id (string): Id of th account
+    
+    Raises:
+        RuntimeError: API error
+    
+    Returns:
+        array: List of future payments being paid on date
+    """
     queryString = "https://api.sbanken.no/exec.bank/api/v1/Payments/{}".format(account_id)
     response = http_session.get(
         queryString,
@@ -99,6 +168,18 @@ def get_payments(http_session: requests.Session, customerid, account_id):
         raise RuntimeError("{} {}, Request was {}".format(response["errorType"], response["errorMessage"], queryString))
 
 def get_transactions(http_session: requests.Session, customerid, account_id, months):
+    """
+    Get transactions for a given number of months back up and until now
+    
+    Args:
+        http_session (requests.Session): Current session
+        customerid (string): Id of the customer
+        account_id (string): Id of the account
+        months (integer): Number of months back to start getting transactions. There is a limit of 12 months 
+    
+    Returns:
+        arrya: List of transactions
+    """
     today = datetime.date.today()
     endDate = today - datetime.timedelta(0)
     startDate = today - datetime.timedelta(30*months)
