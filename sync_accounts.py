@@ -138,6 +138,8 @@ for account_idx in range(len(accounts)):
         if len(updated) > 0:                  # Existing transactions to be updated
             update_transaction = updated[0]
             ynab_transaction.id = update_transaction.id
+            ynab_transaction.cleared = update_transaction.cleared
+            ynab_transaction.approved = update_transaction.approved
             ynab_updates.append(ynab_transaction)
 
         elif len(account_map['account']) > 2:   # New transactions not yet in YNAB
@@ -152,6 +154,7 @@ for account_idx in range(len(accounts)):
 
     if len(ynab_updates) > 0:
         try:
+            # Update existing transactions
             api_response = api_instance.update_transactions(api_settings.budget_id, {"transactions":ynab_updates} )
         except ApiException as e:
                 print("Exception when calling TransactionsApi->update_transaction: %s\n" % e)
