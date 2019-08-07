@@ -16,12 +16,13 @@ def findMatchingTransfer(original_account, transaction, accounts_transactions_li
         if accounts[account_idx]['ID'] != original_account:
             for t in accounts_transactions_list[account_idx]:
                 if getYnabSyncId(t) == getYnabSyncId(compare):
-                    reference = [a for a in account_references if a.id == accounts[account_idx]['account']][0]
+                    reference = [a for a in account_references if a.id == accounts[account_idx]['account']]
+
                     d = {}
                     d['Name'] = accounts[account_idx]['Name']
                     d['account'] = accounts[account_idx]['account']
-                    if hasattr(reference, 'transfer_payee_id'):
-                        d['payee_id'] = reference.transfer_payee_id
+                    if len(reference) > 0 and hasattr(reference[0], 'transfer_payee_id'):
+                        d['payee_id'] = reference[0].transfer_payee_id
                     else:
                         d['payee_id'] = None
 
