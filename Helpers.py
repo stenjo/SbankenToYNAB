@@ -320,6 +320,7 @@ def getPayee(transaction):
 
     # Resolve payees that end up being something like 'Nettgiro til: receipient betalt: 01.08.19'
     if len([x for x in ['til:','fra:','betalt:'] if re.search(x, res.lower())]) > 0:
+        # Explanation: if contains words above, then split on colons, remove last word, strip whitespace and make all words start with capital letter
         res = ' '.join(' '.join(res.split(':')[1:-1]).split(' ')[:-1]).strip().title()
     
     return res[0:50]
