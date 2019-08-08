@@ -140,7 +140,10 @@ for account_idx in range(len(accounts)):
             ynab_transaction.id = update_transaction.id
             ynab_transaction.cleared = update_transaction.cleared
             ynab_transaction.approved = update_transaction.approved
-            ynab_updates.append(ynab_transaction)
+            ynab_transaction.category_id = update_transaction.category_id
+            ynab_transaction.category_name = update_transaction.category_name
+            if ynab_transaction.memo != update_transaction.memo:
+                ynab_updates.append(ynab_transaction)
 
         elif len(account_map['account']) > 2:   # New transactions not yet in YNAB
             ynab_transactions.append(ynab_transaction)
