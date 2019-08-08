@@ -5,6 +5,8 @@ import urllib.parse
 import csv
 import datetime
 import pprint
+import string
+import re
 
 def enable_debug_logging():
     import logging
@@ -319,9 +321,9 @@ def getPayee(transaction):
             raise ValueError ("Can't extract payee from nettgiro.")
 
     # Resolve payees that end up being something like 'Nettgiro til: receipient betalt: 01.08.19'
-    if len([x for x in ['til:','fra:','betalt:'] if re.search(x, res.lower())]) > 0:
+    if len([x for x in ['til:','fra:','betalt:'] if re.search(x, res.lower())]) > 1:
         # Explanation: if contains words above, then split on colons, remove last word, strip whitespace and make all words start with capital letter
-        res = ' '.join(' '.join(res.split(':')[1:-1]).split(' ')[:-1]).strip().title()
+        res = string.capwords(' '.join(' '.join(res.split(':')[1:-1]).split(' ')[:-1]))
     
     return res[0:50]
 
