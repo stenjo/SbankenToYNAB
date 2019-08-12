@@ -5,6 +5,8 @@ import urllib.parse
 import csv
 import datetime
 import pprint
+import string
+import re
 
 def enable_debug_logging():
     import logging
@@ -30,6 +32,19 @@ def create_authenticated_http_session(client_id, client_secret) -> requests.Sess
 
 
 def get_customer_information(http_session: requests.Session, customerid):
+    """
+    Get customer information SBanken given by the customerid
+    
+    Args:
+        http_session (requests.Session): [description]
+        customerid ([type]): [description]
+    
+    Raises:
+        RuntimeError: [description]
+    
+    Returns:
+        [type]: [description]
+    """
     response_object = http_session.get(
         "https://api.sbanken.no/exec.customers/api/v1/Customers",
         headers={'customerId': customerid}
@@ -45,11 +60,24 @@ def get_customer_information(http_session: requests.Session, customerid):
 
 
 def get_accounts(http_session: requests.Session, customerid):
+    """
+    Fetch all accounts from SBanken based on customerid
+
+    Args:
+        http_session (requests.Session): [description]
+        customerid ([type]): [description]
+    
+    Raises:
+        RuntimeError: [description]
+    
+    Returns:
+        [type]: [description]
+    """
     response = http_session.get(
         "https://api.sbanken.no/exec.bank/api/v1/Accounts",
         headers={'customerId': customerid}
     ).json()
-    #print(response)
+
     if not response["isError"]:
         return response["items"]
     else:
@@ -57,7 +85,23 @@ def get_accounts(http_session: requests.Session, customerid):
 
 
 def get_transactions_period(http_session: requests.Session, customerid, account_id, startDate, endDate):
-    # print(endDate)
+    """
+    Get all transactions from SBanken for a given time period
+    
+    Args:
+        http_session (requests.Session): [description]
+        customerid (string): The customer id of the user
+        account_id (string): The account id where transactions are read
+        startDate (Date): From date
+        endDate (Date): To date
+    
+    Raises:
+        RuntimeError: Error reading from API
+        RuntimeError: 
+            
+    Returns:
+        array: List of transactions
+    """
     queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
     response = http_session.get(queryString
         , headers={'customerId': customerid}
@@ -73,9 +117,22 @@ def get_transactions_period(http_session: requests.Session, customerid, account_
         raise RuntimeError("{} {}, Request was {}".format(response["errorType"], response["errorMessage"], queryString))   
 
 def get_standing_orders(http_session: requests.Session, customerid, account_id):
-
-    print(customerid)
-    print(account_id)
+    """
+    Get all future repeated future payments from SBanken API
+    
+    Args:
+        http_session (requests.Session): Current session
+        customerid (string): Id of the customer
+        account_id (string): Id of the account
+    
+    Raises:
+        RuntimeError: API error
+    
+    Returns:
+        array: List of standing order payments being paid on date 
+    """
+    # print(customerid)
+    # print(account_id)
     response = http_session.get(
         "https://api.sbanken.no/exec.bank/api/v1/StandingOrders/{}".format(account_id),
         headers={'customerId': customerid}
@@ -87,6 +144,20 @@ def get_standing_orders(http_session: requests.Session, customerid, account_id):
         raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
 
 def get_payments(http_session: requests.Session, customerid, account_id):
+    """
+    Get all future payments from SBanken API
+    
+    Args:
+        http_session (requests.Session): Current session
+        customerid (string): ID of the customer
+        account_id (string): Id of th account
+    
+    Raises:
+        RuntimeError: API error
+    
+    Returns:
+        array: List of future payments being paid on date
+    """
     queryString = "https://api.sbanken.no/exec.bank/api/v1/Payments/{}".format(account_id)
     response = http_session.get(
         queryString,
@@ -99,6 +170,18 @@ def get_payments(http_session: requests.Session, customerid, account_id):
         raise RuntimeError("{} {}, Request was {}".format(response["errorType"], response["errorMessage"], queryString))
 
 def get_transactions(http_session: requests.Session, customerid, account_id, months):
+    """
+    Get transactions for a given number of months back up and until now
+    
+    Args:
+        http_session (requests.Session): Current session
+        customerid (string): Id of the customer
+        account_id (string): Id of the account
+        months (integer): Number of months back to start getting transactions. There is a limit of 12 months 
+    
+    Returns:
+        arrya: List of transactions
+    """
     today = datetime.date.today()
     endDate = today - datetime.timedelta(0)
     startDate = today - datetime.timedelta(30*months)
@@ -107,6 +190,18 @@ def get_transactions(http_session: requests.Session, customerid, account_id, mon
 
 
 def get_transactions_year(http_session: requests.Session, customerid, account_id, year):
+    """
+    Get transactions from a full year
+    
+    Args:
+        http_session (requests.Session): Current session
+        customerid (string): Id of the customer
+        account_id (string): Id of the account
+        year (int): The year 
+    
+    Returns:
+        array: Transactions from jan 1st to dec 31st the given year
+    """
     today = datetime.date.today()
     endDate = datetime.date(year, 12, 31)
     if today < endDate:
@@ -117,6 +212,15 @@ def get_transactions_year(http_session: requests.Session, customerid, account_id
     return get_transactions_period(http_session, customerid, account_id, startDate, endDate)
 
 def getTransactionDate(transaction):
+    """
+    Extract the transaction date from an SBanken transaction
+    
+    Args:
+        transaction (object): Transaction from a transaction list
+    
+    Returns:
+        string: Transaction date in the format DD.MM.YYYY
+    """
     # d = datetime.datetime.fromisoformat(transaction['interestDate'])
     d = datetime.datetime.strptime(transaction['interestDate'].split('T')[0], "%Y-%m-%d")
     code = transaction['transactionTypeCode']
@@ -135,6 +239,15 @@ def getTransactionDate(transaction):
     return d.strftime('%d.%m.%Y')
 
 def getYnabTransactionDate(transaction):
+    """
+    Extract transaction date from an SBanken transaction and return this in a YNAB format
+    
+    Args:
+        transaction (object): Transaction from a transaction list
+    
+    Returns:
+        string: Transaction date in the format YYYY-MM-DD
+    """
     if 'beneficiaryName' in transaction:
         d = datetime.datetime.strptime(getPaymentsDate(transaction), "%d.%m.%Y")
         return d.strftime('%Y-%m-%d')
@@ -144,9 +257,24 @@ def getYnabTransactionDate(transaction):
 
 
 def getPayee(transaction):
+    """
+    Extract the Payee name from an SBanken transaction. The best guess of the Payee based on information in the 
+    transaction object. Where and what may be very dependant on the transaction content and type.
+    
+    Args:
+        transaction (object): Transaction from a transaction list
+    
+    Raises:
+        ValueError: Exception if unable to extract payee
+    
+    Returns:
+        string: Payee
+    """
     res = bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
     if transaction['transactionTypeCode'] == 752:   # renter
         res = 'Sbanken'
+    elif transaction['transactionTypeCode'] == 962 or transaction['transactionType'].split(' ')[0] == 'Vipps':   # Vipps straksbet.
+        res = transaction['transactionType']
     elif transaction['transactionTypeCode'] == 709 or transaction['transactionTypeCode'] == 73:   # Varer
         payee = transaction['text'].split(' ')
         if payee[0] == 'KORREKSJON':
@@ -169,12 +297,15 @@ def getPayee(transaction):
         payee = payee [:2] # Cutting away exchange rate
         payee = " ".join (payee) # Joining string back
         res = payee.capitalize()
+    elif transaction['transactionTypeText'] == 'STROF':
+        res = transaction['text'].capitalize()
     elif transaction['transactionTypeCode'] == 561:   # Varekjøp
         payee = transaction['text'].split(' ')
         #print(transaction)
         if len(payee) < 2:
-            return transaction['transactionType']
-        return (payee[1]+ ' ' + payee[2]).capitalize()
+            res = transaction['transactionType'].capitalize()
+        else:
+            res = (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['otherAccountNumberSpecified'] == True:
             pprint.pprint(transaction)
@@ -188,6 +319,12 @@ def getPayee(transaction):
             res = (payee[2] + ' ' + payee[3]).capitalize()
         except IndexError:
             raise ValueError ("Can't extract payee from nettgiro.")
+
+    # Resolve payees that end up being something like 'Nettgiro til: receipient betalt: 01.08.19'
+    if len([x for x in ['til:','fra:','betalt:'] if re.search(x, res.lower())]) > 1:
+        # Explanation: if contains words above, then split on colons, remove last word, strip whitespace and make all words start with capital letter
+        res = string.capwords(' '.join(' '.join(res.split(':')[1:-1]).split(' ')[:-1]))
+    
     return res[0:50]
 
 def getMemo(transaction):
@@ -200,17 +337,25 @@ def getMemo(transaction):
     if transaction['isReservation'] == True:
         isReservation = 'Reserved: '
 
-    if transaction['transactionTypeCode'] == 710:   # Varekjøp
-        return isReservation + transaction['text'].split(' ',1)[1].capitalize() + transactionId
+    transactionMemo = ''
+
+    if transaction['transactionTypeCode'] == 962 or transaction['transactionType'].split(' ')[0] == 'Vipps':   # Vipps straksbet.
+        transactionMemo = 'Vipps ' + transaction['text'].capitalize()
+    elif transaction['transactionTypeCode'] == 710:   # Varekjøp
+        transactionMemo = transaction['text'].split(' ',1)[1].capitalize()
     elif transaction['transactionTypeCode'] == 714: # Visa vare
-        return isReservation + transaction['text'].split(' ',2)[2].capitalize() + transactionId
+        transactionMemo = transaction['text'].split(' ',2)[2].capitalize()
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['amount'] > 0:
-            return isReservation + 'Overføring fra annen egen konto'
+            transactionMemo = 'Overføring fra annen egen konto'
         else:
-            return isReservation + 'Overføring til annen egen konto'
+            transactionMemo = 'Overføring til annen egen konto'
+    elif transaction['transactionTypeText'] == 'STROF':
+        transactionMemo = transaction['transactionType'].capitalize()
+    else:
+        transactionMemo = transaction['text'].capitalize()
  
-    return isReservation + transaction['text'].capitalize() + transactionId
+    return isReservation + transactionMemo + transactionId
 
 def getOut(transaction):
     if transaction['amount'] < 0.0:
