@@ -9,6 +9,9 @@ SECRET = "****************************************************"
 # Transactions may change when confirmed and updates to YNAB may have to be done manually
 includeReservedTransactions = False
 
+# Uncomment if synced transactions should be flagged with a colour
+# transactionFlagColor = 'Blue'
+
 # The SBanken to YNAB mappings
 budget_id = '12345ab-6789-abcd-****-fedcba987654' # str | The ID of the Budget.
 api_key = '*********'   # Tha YNAB Api key

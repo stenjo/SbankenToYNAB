@@ -319,6 +319,13 @@ def getPayee(transaction):
             res = (payee[2] + ' ' + payee[3]).capitalize()
         except IndexError:
             raise ValueError ("Can't extract payee from nettgiro.")
+    elif transaction['transactionTypeCode'] == 15:  # Valuta
+        payee = list(filter((''). __ne__, transaction['text'].split(' ')))
+        try:
+            res = " ".join(payee[:len(payee)-2])
+            # res = (payee[2] + ' ' + payee[3]).capitalize()
+        except IndexError:
+            raise ValueError ("Can't extract payee from nettgiro.")
 
     # Resolve payees that end up being something like 'Nettgiro til: receipient betalt: 01.08.19'
     if len([x for x in ['til:','fra:','betalt:'] if re.search(x, res.lower())]) > 1:

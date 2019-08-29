@@ -104,6 +104,9 @@ for account_idx in range(len(accounts)):
             import_id=getYnabSyncId(transaction_item)
         )
         ynab_transaction.payee_name = payee_name
+        if 'transactionFlagColor' in vars(api_settings) and api_settings.transactionFlagColor != None:
+            ynab_transaction.flag_color = api_settings.transactionFlagColor
+
 
         # Change import_id if same amount on same day several times
         transaction_ref = ':'.join(ynab_transaction.import_id.split(':')[:3])
@@ -142,7 +145,7 @@ for account_idx in range(len(accounts)):
             ynab_transaction.approved = update_transaction.approved
             ynab_transaction.category_id = update_transaction.category_id
             ynab_transaction.category_name = update_transaction.category_name
-            if ynab_transaction.memo != update_transaction.memo:
+            if ynab_transaction.memo != update_transaction.memo or ynab_transaction.payee_name != update_transaction.payee_name:
                 ynab_updates.append(ynab_transaction)
 
         elif len(account_map['account']) > 2:   # New transactions not yet in YNAB
