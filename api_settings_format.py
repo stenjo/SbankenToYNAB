@@ -10,7 +10,7 @@ SECRET = "****************************************************"
 includeReservedTransactions = False
 
 # Uncomment if synced transactions should be flagged with a colour
-# transactionFlagColor = 'Blue'
+# transactionFlagColor = 'blue'
 
 # The SBanken to YNAB mappings
 budget_id = '12345ab-6789-abcd-****-fedcba987654' # str | The ID of the Budget.

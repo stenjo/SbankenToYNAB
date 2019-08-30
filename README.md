@@ -58,6 +58,6 @@ Eanable this by setting
 Some times, particluarly if you are using a lot of planned transactions, it might be difficult to know the difference between the transactions that are actually from the bank and which ones are just planned transactions that have reached the payment date. If you have all the funds on your account; no problem, but some times the actual transaction is delayed and YNAB does not match them due to different payment dates. This causes some mess and flagging the synced transactions automatically allows you to spot the real ones immediately.
 To enable this, uncomment the line
 
-```# transactionFlagColor = 'Blue'```
+```# transactionFlagColor = 'blue'```
 
-and you will have all new synched transactins flagged with blue. You can set any color you like.
+and you will have all new synched transactins flagged with blue. You can select any color from the values ```["red", "orange", "yellow", "green", "blue", "purple"]```.
