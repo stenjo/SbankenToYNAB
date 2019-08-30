@@ -44,3 +44,20 @@ Posts the results onto an mqtt server for availability to home automation screen
 ## publish_accounts_status.py
 To be run by cron-job for publishing of a set of account balances from SBanken. Posts both balance and available (available = balance - reservations)
 Posts the results onto an mqtt server for availability to home automation screen or any other display device. I'm using OpenHab2 and have created a template widget for displaying data.
+
+# Configurable settings
+The settings file ```api_settings.py``` (created from ```api_settings_format.py```) contains a few configurations you might consider:
+## Synching preliminary transactions
+Enabling the synchronisation of reserved transactions (transactions that are not yet confirmed) will make all occurrences on you bank statement to be synced. The payee and memo field will be updated later, and the amount might even be changed at a later stage on the bank end - but you will have the transaction amount in YNAB a lot sooner. Waiting for the confirmed transaction (default behaviour) may cause several days delay.
+Eanable this by setting 
+
+```includeReservedTransactions = True```
+
+(default ```False```)
+## Flagging synced or imported transactions with a colour
+Some times, particluarly if you are using a lot of planned transactions, it might be difficult to know the difference between the transactions that are actually from the bank and which ones are just planned transactions that have reached the payment date. If you have all the funds on your account; no problem, but some times the actual transaction is delayed and YNAB does not match them due to different payment dates. This causes some mess and flagging the synced transactions automatically allows you to spot the real ones immediately.
+To enable this, uncomment the line
+
+```# transactionFlagColor = 'Blue'```
+
+and you will have all new synched transactins flagged with blue. You can set any color you like.
