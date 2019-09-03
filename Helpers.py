@@ -279,7 +279,10 @@ def getPayee(transaction):
         payee = transaction['text'].split(' ')
         if payee[0] == 'KORREKSJON':
             res = (payee[3]+ ' ' + payee[4]).capitalize()
-        res = (payee[1]+ ' ' + payee[2]).capitalize()
+        elif payee[1] == 'RESERVE':
+            res = "RESERVE"
+        else:
+            res = (payee[1]+ ' ' + payee[2]).capitalize()
     elif transaction['transactionTypeCode'] == 710 or transaction['transactionTypeCode'] == 73:   # Varekjøp
         payee = transaction['text'].split(' ')
         # print(transaction['text'])
