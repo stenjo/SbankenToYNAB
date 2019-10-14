@@ -41,7 +41,7 @@ api_accounts = ynab.AccountsApi(ynab.ApiClient(configuration))
 http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
 today = datetime.date.today()
 endDate = today
-startDate = today - datetime.timedelta(5)   # Last 5 days
+startDate = today - datetime.timedelta(8)   # Last 8 days
 
 # Get the transactions for all accounts
 accounts = []
