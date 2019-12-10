@@ -234,7 +234,14 @@ def getTransactionDate(transaction):
             d = datetime.date(d.year, tDate.month, tDate.day)
     elif code == 714 and transaction['cardDetailsSpecified']: # Visa
         d = datetime.datetime.strptime(transaction['cardDetails']['purchaseDate'].split('T')[0], "%Y-%m-%d")
-        # d = datetime.datetime.fromisoformat(transaction['cardDetails']['purchaseDate'])
+        # In case purchaseDate is more than 300 days in the future, substract 1 year from purchaseDate in order to get correct purchaseDate
+        delta = datetime.datetime.now() - d
+        if delta < datetime.timedelta() and (abs(delta) > datetime.timedelta(days=300)):
+            dateArray = transaction['cardDetails']['purchaseDate'].split('T')[0].split("-")
+            d = datetime.datetime(
+                year=(int(dateArray[0])-1)
+                , month=int(dateArray[1])
+                , day=int(dateArray[2]))
 
     return d.strftime('%d.%m.%Y')
 
