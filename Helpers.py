@@ -211,6 +211,48 @@ def get_transactions_year(http_session: requests.Session, customerid, account_id
 
     return get_transactions_period(http_session, customerid, account_id, startDate, endDate)
 
+def parseVisaDate (stringDate, substractYear=False):
+    """
+    Parses text from Visa transaction, doesn't handles errors with 1 year miss
+
+    Args:
+        stringDate (string): String that contains the date. That would typically be cardDetails/purchaseDate
+        substractYear (boolean): Should we substract 1 year from the date?
+    Returns:
+        date: date to be used in YNAB
+    """
+    res = datetime.datetime.strptime(stringDate.split('T')[0], "%Y-%m-%d")
+    if substractYear:
+        dateArray = stringDate.split('T')[0].split("-")
+        res = datetime.datetime(
+            year=(int(dateArray[0])-1)
+            , month=int(dateArray[1])
+            , day=int(dateArray[2]))
+    return res
+
+def parseYearlessDate (stringDate, forcedYear):
+    """
+    Parses text from yearless transaction. Sets year to the value given.
+
+    Args:
+        stringDate (string): String that contains the date. That would typically be cardDetails/purchaseDate
+        forcedYear (int): Year that we should force transaction to
+    Returns:
+        date: date to be used in YNAB
+    """
+    res = None
+    dt = stringDate.split(' ')
+    if dt[0] == 'KORREKSJON': 
+        tDate = datetime.datetime.strptime(dt[2], "%d.%m")
+    else:
+        tDate = datetime.datetime.strptime(dt[0], "%d.%m")
+    res = datetime.datetime(
+        year=forcedYear
+        , month=tDate.month
+        , day=tDate.day
+        )
+    return res
+
 def getTransactionDate(transaction):
     """
     Extract the transaction date from an SBanken transaction
@@ -221,31 +263,26 @@ def getTransactionDate(transaction):
     Returns:
         string: Transaction date in the format DD.MM.YYYY
     """
-    # d = datetime.datetime.fromisoformat(transaction['interestDate'])
     d = datetime.datetime.strptime(transaction['interestDate'].split('T')[0], "%Y-%m-%d")
     code = transaction['transactionTypeCode']
+    accountingDate = datetime.datetime.strptime(transaction['accountingDate'].split('T')[0], "%Y-%m-%d")
     if  code == 710 or code == 709:
-        dt = transaction['text'].split(' ')
-        if dt[0] == 'KORREKSJON': 
-            tDate = datetime.datetime.strptime(dt[2], "%d.%m")
-            d = datetime.date(d.year, tDate.month, tDate.day)
-        else:
-            tDate = datetime.datetime.strptime(dt[0], "%d.%m")
-            d = datetime.date(d.year, tDate.month, tDate.day)
+        d = parseYearlessDate(transaction['text'], forcedYear=d.year)
     elif code == 714 and transaction['cardDetailsSpecified']: # Visa
-        d = datetime.datetime.strptime(transaction['cardDetails']['purchaseDate'].split('T')[0], "%Y-%m-%d")
-        accountingDate = datetime.datetime.strptime(transaction['accountingDate'].split('T')[0], "%Y-%m-%d")
-        # In case purchaseDate is more than 300 days away from the accountingDate in the future,
-        # substract 1 year from purchaseDate in order to get correct purchaseDate
+        d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'])
+    # In case transaction date (purchaseDate og date from text) is more than 300 days away from the
+    # accountingDate in the future, substract 1 year from purchaseDate in order to get correct transaction date
+    try:
         delta = accountingDate - d
-        if delta < datetime.timedelta() and (abs(delta) > datetime.timedelta(days=300)):
-            dateArray = transaction['cardDetails']['purchaseDate'].split('T')[0].split("-")
-            d = datetime.datetime(
-                year=(int(dateArray[0])-1)
-                , month=int(dateArray[1])
-                , day=int(dateArray[2]))
-
+    except TypeError:
+        accountingDate
+    if delta < datetime.timedelta() and (abs(delta) > datetime.timedelta(days=300)):
+        if  code == 710 or code == 709:
+            d = parseYearlessDate(transaction['text'], forcedYear=(d.year-1))
+        elif code == 714 and transaction['cardDetailsSpecified']:
+            d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'], substractYear=True)
     return d.strftime('%d.%m.%Y')
+
 
 def getYnabTransactionDate(transaction):
     """
