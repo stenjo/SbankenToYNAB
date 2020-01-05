@@ -272,10 +272,7 @@ def getTransactionDate(transaction):
         d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'])
     # In case transaction date (purchaseDate og date from text) is more than 300 days away from the
     # accountingDate in the future, substract 1 year from purchaseDate in order to get correct transaction date
-    try:
-        delta = accountingDate - d
-    except TypeError:
-        accountingDate
+    delta = accountingDate - d
     if delta < datetime.timedelta() and (abs(delta) > datetime.timedelta(days=300)):
         if  code == 710 or code == 709:
             d = parseYearlessDate(transaction['text'], forcedYear=(d.year-1))
