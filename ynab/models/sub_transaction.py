@@ -230,8 +230,9 @@ class SubTransaction(object):
         :param transfer_account_id: The transfer_account_id of this SubTransaction.  # noqa: E501
         :type: str
         """
-        if transfer_account_id is None:
-            raise ValueError("Invalid value for `transfer_account_id`, must not be `None`")  # noqa: E501
+        # 2019.08.14: YNAB seem to return subtransactions that do not follow Swagger definition of data
+        #if transfer_account_id is None:
+        #    raise ValueError("Invalid value for `transfer_account_id`, must not be `None`")  # noqa: E501
 
         self._transfer_account_id = transfer_account_id
 
