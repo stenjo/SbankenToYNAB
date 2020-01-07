@@ -85,7 +85,7 @@ for account_idx in range(len(accounts)):
     for transaction_item in transactions:
         payee_id = None
         if api_settings.includeReservedTransactions != True:
-            if transaction_item['isReservation'] == True:
+            if transaction_item.get('isReservation') == True or transaction_item.get('otherAccountNumberSpecified') == False:
                 continue
 
         try:
@@ -109,7 +109,7 @@ for account_idx in range(len(accounts)):
         if 'transactionFlagColor' in vars(api_settings) and api_settings.transactionFlagColor != None:
             ynab_transaction.flag_color = api_settings.transactionFlagColor
 
-        if 'reservedFlagColor' in vars(api_settings) and api_settings.reservedFlagColor != None and transaction_item['isReservation'] == True:
+        if 'reservedFlagColor' in vars(api_settings) and api_settings.reservedFlagColor != None and transaction_item.get('isReservation') == True or transaction_item.get('otherAccountNumberSpecified') == False:
             ynab_transaction.flag_color = api_settings.reservedFlagColor
 
 
