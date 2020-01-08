@@ -109,7 +109,7 @@ for account_idx in range(len(accounts)):
         if 'transactionFlagColor' in vars(api_settings) and api_settings.transactionFlagColor != None:
             ynab_transaction.flag_color = api_settings.transactionFlagColor
 
-        if 'reservedFlagColor' in vars(api_settings) and api_settings.reservedFlagColor != None and transaction_item.get('isReservation') == True or transaction_item.get('otherAccountNumberSpecified') == False:
+        if 'reservedFlagColor' in vars(api_settings) and api_settings.reservedFlagColor != None and (transaction_item.get('isReservation') == True or (transaction_item.get('otherAccountNumberSpecified') == False and transaction_item.get('source') != 'Archive')):
             ynab_transaction.flag_color = api_settings.reservedFlagColor
 
 
@@ -153,8 +153,11 @@ for account_idx in range(len(accounts)):
             ynab_transaction.category_id = update_transaction.category_id
             ynab_transaction.category_name = update_transaction.category_name
             # if ynab_transaction.memo != update_transaction.memo or ynab_transaction.payee_name != update_transaction.payee_name:
-            ynab_transaction.memo = update_transaction.memo
-            ynab_transaction.payee_name = update_transaction.payee_name
+            # ynab_transaction.memo = update_transaction.memo
+            if ynab_transaction.payee_name != update_transaction.payee_name:
+                ynab_transaction.payee_id = None
+            else:
+                ynab_transaction.payee_id = update_transaction.payee_id
             ynab_updates.append(ynab_transaction)
 
         elif len(account_map['account']) > 2:   # New transactions not yet in YNAB
