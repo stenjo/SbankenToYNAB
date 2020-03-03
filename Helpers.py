@@ -319,7 +319,7 @@ def getPayee(transaction):
     res = bytes(transaction['text'].encode()).decode('utf-8','backslashreplace').capitalize()
     if transaction['transactionTypeCode'] == 752:   # renter
         res = 'Sbanken'
-    elif transaction['transactionTypeCode'] == 962 or transaction['transactionType'].split(' ')[0] == 'Vipps':   # Vipps straksbet.
+    elif transaction['transactionTypeCode'] == 962 or (transaction['transactionType'].split(' ')[0] == 'Vipps' and transaction.get('otherAccountNumberSpecified') == False):   # Vipps straksbet.
         res = transaction['transactionType']
     elif transaction['transactionTypeCode'] == 709 or transaction['transactionTypeCode'] == 73:   # Varer
         payee = transaction['text'].split(' ')
@@ -353,8 +353,12 @@ def getPayee(transaction):
         #print(transaction)
         if len(payee) < 2:
             res = transaction['transactionType'].capitalize()
+        elif len([x for x in ['til:','fra:','betalt:'] if re.search(x, res.lower())]) > 0:
+            # Explanation: if contains words above, then split on colons, remove last word, strip whitespace and make all words start with capital letter
+            res = string.capwords(' '.join([x for x in payee if x.lower() not in ['til:','fra:','betalt:']]))
         else:
             res = (payee[1]+ ' ' + payee[2]).capitalize()
+
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['otherAccountNumberSpecified'] == True:
             pprint.pprint(transaction)
@@ -376,7 +380,7 @@ def getPayee(transaction):
             raise ValueError ("Can't extract payee from nettgiro.")
 
     # Resolve payees that end up being something like 'Nettgiro til: receipient betalt: 01.08.19'
-    if len([x for x in ['til:','fra:','betalt:'] if re.search(x, res.lower())]) > 1:
+    if len([x for x in ['til:','fra:','betalt:'] if re.search(x, res.lower())]) > 0:
         # Explanation: if contains words above, then split on colons, remove last word, strip whitespace and make all words start with capital letter
         res = string.capwords(' '.join(' '.join(res.split(':')[1:-1]).split(' ')[:-1]))
     
