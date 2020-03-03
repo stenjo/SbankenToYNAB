@@ -245,7 +245,10 @@ def parseYearlessDate (stringDate, forcedYear):
     if dt[0] == 'KORREKSJON': 
         tDate = datetime.datetime.strptime(dt[2], "%d.%m")
     else:
-        tDate = datetime.datetime.strptime(dt[0], "%d.%m")
+        try:
+            tDate = datetime.datetime.strptime(dt[0], "%d.%m")
+        except ValueError:
+            tDate = datetime.datetime.strptime(dt[0] + ".{}".format(forcedYear), "%d.%m.%Y")
     res = datetime.datetime(
         year=forcedYear
         , month=tDate.month
