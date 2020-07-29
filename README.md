@@ -7,6 +7,8 @@ Enter your details into the api_settings.py and run from there.
 The ListAccountsAndIds.py lists all accounts available to your id and prints the account given name, its account number and id. 
 GetStatementsAllAccounts creates a CSV file for all accounts available the last month.
 
+Want to try YNAB? Help me out by using this referral link: https://ynab.com/referral/?ref=OKHeNiTm3GB_ss4i&utm_source=customer_referral
+
 # Setup guide
 
 * Requires Python 3
