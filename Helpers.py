@@ -284,8 +284,11 @@ def getTransactionDate(transaction):
         else:
             # Use accounting date if nothing else. Make sure the date is not in the future
             d = accountingDate
-            
-    return d.strftime('%d.%m.%Y')
+
+    if d > datetime.datetime.today():
+        return accountingDate.strftime('%d.%m.%Y')
+    else:
+        return d.strftime('%d.%m.%Y')
 
 
 def getYnabTransactionDate(transaction):
