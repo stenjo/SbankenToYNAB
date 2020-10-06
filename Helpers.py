@@ -281,6 +281,10 @@ def getTransactionDate(transaction):
             d = parseYearlessDate(transaction['text'], forcedYear=(d.year-1))
         elif code == 714 and transaction['cardDetailsSpecified']:
             d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'], substractYear=True)
+        else:
+            # Use accounting date if nothing else. Make sure the date is not in the future
+            d = accountingDate
+            
     return d.strftime('%d.%m.%Y')
 
 
@@ -361,11 +365,11 @@ def getPayee(transaction):
 
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['otherAccountNumberSpecified'] == True:
-            pprint.pprint(transaction)
-        if transaction['amount'] > 0:
-            res = 'Transfer from:'
-        else:
-            res = 'Transfer to:'
+            #pprint.pprint(transaction)
+            if transaction['amount'] > 0:
+                res = 'Transfer from:'
+            else:
+                res = 'Transfer to:'
     elif transaction['transactionTypeCode'] == 203:  # Nettgiro
         payee = transaction['text'].split(' ')
         try:
