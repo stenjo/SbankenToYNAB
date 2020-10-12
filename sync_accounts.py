@@ -4,11 +4,14 @@ import ynab
 import api_settings
 import datetime
 import logging
+import platform
+
 from ynab.rest import ApiException
 from pprint import pprint
 from  Helpers import create_authenticated_http_session,get_accounts,get_transactions,getTransactionDate,getPayee,getMemo, getOut, getIn,getIntAmountMilli,getYnabTransactionDate,get_transactions_period,getYnabSyncId
 
 logging.basicConfig(filename='sync_accounts.log', filemode='w', level=logging.INFO)
+logging.info("Python version: %s, %s", platform.python_version(), platform.python_compiler())
 
 def findMatchingTransfer(original_account, transaction, accounts_transactions_list, accounts, account_references):
     
