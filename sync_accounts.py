@@ -3,10 +3,12 @@ import time
 import ynab
 import api_settings
 import datetime
+import logging
 from ynab.rest import ApiException
 from pprint import pprint
 from  Helpers import create_authenticated_http_session,get_accounts,get_transactions,getTransactionDate,getPayee,getMemo, getOut, getIn,getIntAmountMilli,getYnabTransactionDate,get_transactions_period,getYnabSyncId
 
+logging.basicConfig(filename='sync_accounts.log', filemode='w', level=logging.INFO)
 
 def findMatchingTransfer(original_account, transaction, accounts_transactions_list, accounts, account_references):
     
@@ -71,15 +73,21 @@ for account_idx in range(len(accounts)):
     import_ids = []                                 # Import ids (before last colon) handled so far for this account
     existing_transactions = []
 
+    logging.info("Fetched %i transactions from %s in SBanken", len(transactions), account_map['Name'])
+
     # Find existing transactions
     if len(account_map['account']) > 2: # Only fetch YNAB transactions from accounts that are synced in YNAB
         try:
             # Get existing transactions that are Reserved in case they need to be updated
             api_response = api_instance.get_transactions_by_account(api_settings.budget_id, account_map['account'], since_date=startDate)
+            logging.info(" API response %s", api_response)
         except ApiException as e:
-            print("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
+            logging.error("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
 
         existing_transactions = api_response.data.transactions
+
+        logging.info("Got %i existing YNAB transactions from %s", len(existing_transactions), account_map['Name'])
+
 
     # Loop through all transactions        
     for transaction_item in transactions:
@@ -94,6 +102,8 @@ for account_idx in range(len(accounts)):
         except ValueError:
             pass
         
+        logging.info("Transaction: %s,  amount: %s, typecode: %s, text: %s", getYnabTransactionDate(transaction_item), transaction_item['amount'], transaction_item['transactionTypeCode'], getMemo(transaction_item))
+
         ynab_transaction = ynab.TransactionDetail(
             date=getYnabTransactionDate(transaction_item), 
             amount=getIntAmountMilli(transaction_item), 
@@ -136,6 +146,7 @@ for account_idx in range(len(accounts)):
                         ynab_transaction.payee_name += 'to: '
                     ynab_transaction.payee_name += payee['Name']
 
+                logging.info("Found matching internal transaction id: %s, name: %s", ynab_transaction.payee_id, ynab_transaction.payee_name)
                 ynab_transaction.memo += ': '+payee['Name']
             else:
                 ynab_transaction.payee_name = (ynab_transaction.payee_name[:45] + '...') if len(ynab_transaction.payee_name) > 49 else ynab_transaction.payee_name
@@ -163,17 +174,24 @@ for account_idx in range(len(accounts)):
         elif len(account_map['account']) > 2:   # New transactions not yet in YNAB
             ynab_transactions.append(ynab_transaction)
     
+
+    logging.info(" %i YNAB transactions to be added", len(ynab_transactions))
+
     if len(ynab_transactions) > 0:
         try:
             # Create new transaction
             api_response = api_instance.create_transaction(api_settings.budget_id, {"transactions":ynab_transactions})
+            logging.info(" API response %s", api_response)
         except ApiException as e:
             print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
             #print (ynab_transactions)
 
+    logging.info(" %i YNAB transactions to be updated", len(ynab_updates))
+
     if len(ynab_updates) > 0:
         try:
             # Update existing transactions
-            api_response = api_instance.update_transactions(api_settings.budget_id, {"transactions":ynab_updates} )
+            api_response = api_instance.update_transactions(api_settings.budget_id, {"transactions": ynab_updates})
+            logging.info(" API response %s", api_response)
         except ApiException as e:
                 print("Exception when calling TransactionsApi->update_transaction: %s\n" % e)
