@@ -83,7 +83,10 @@ for account_idx in range(len(accounts)):
         try:
             # Get existing transactions that are Reserved in case they need to be updated
             api_response = api_instance.get_transactions_by_account(api_settings.budget_id, account_map['account'], since_date=startDate)
-            logging.info(" API response %s", api_response)
+
+            if api_response.data is None or api_response.data.transactions is None: logging.info(" API response %s", api_response)
+            else: logging.info(" API response %s", "{'data': {'transactions': [" + str(len(api_response.data.transactions)) + "]}}")
+
         except ApiException as e:
             logging.error("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
 
@@ -198,3 +201,7 @@ for account_idx in range(len(accounts)):
             logging.info(" API response %s", api_response)
         except ApiException as e:
                 print("Exception when calling TransactionsApi->update_transaction: %s\n" % e)
+
+    logging.info("Sync done for %s\n", account_map['Name'])
+
+logging.info("Sync done for all")
