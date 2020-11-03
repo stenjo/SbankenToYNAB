@@ -92,6 +92,7 @@ for account_idx in range(len(accounts)):
             payee_name = getPayee(transaction_item)
          # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
         except ValueError:
+            payee_name = "Unknown"
             pass
         
         ynab_transaction = ynab.TransactionDetail(
@@ -169,7 +170,7 @@ for account_idx in range(len(accounts)):
             api_response = api_instance.create_transaction(api_settings.budget_id, {"transactions":ynab_transactions})
         except ApiException as e:
             print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
-            #print (ynab_transactions)
+            print (ynab_transactions)
 
     if len(ynab_updates) > 0:
         try:

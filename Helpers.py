@@ -259,10 +259,10 @@ def parseYearlessDate (stringDate, forcedYear):
 def getTransactionDate(transaction):
     """
     Extract the transaction date from an SBanken transaction
-    
+
     Args:
         transaction (object): Transaction from a transaction list
-    
+
     Returns:
         string: Transaction date in the format DD.MM.YYYY
     """
@@ -273,6 +273,8 @@ def getTransactionDate(transaction):
         d = parseYearlessDate(transaction['text'], forcedYear=d.year)
     elif code == 714 and transaction['cardDetailsSpecified']: # Visa
         d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'])
+    elif code == 714: # Vi skal aldri bruke interest rate for Visa, vi har hatt meningsløse tilfeller med interest date en måned i forveien
+        d = accountingDate
     # In case transaction date (purchaseDate og date from text) is more than 300 days away from the
     # accountingDate in the future, substract 1 year from purchaseDate in order to get correct transaction date
     delta = accountingDate - d
@@ -281,8 +283,9 @@ def getTransactionDate(transaction):
             d = parseYearlessDate(transaction['text'], forcedYear=(d.year-1))
         elif code == 714 and transaction['cardDetailsSpecified']:
             d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'], substractYear=True)
+        elif code == 714: # Og her kommer det å feile
+            d = accountingDate
     return d.strftime('%d.%m.%Y')
-
 
 def getYnabTransactionDate(transaction):
     """
@@ -294,6 +297,7 @@ def getYnabTransactionDate(transaction):
     Returns:
         string: Transaction date in the format YYYY-MM-DD
     """
+    #print (transaction)
     if 'beneficiaryName' in transaction:
         d = datetime.datetime.strptime(getPaymentsDate(transaction), "%d.%m.%Y")
         return d.strftime('%Y-%m-%d')
