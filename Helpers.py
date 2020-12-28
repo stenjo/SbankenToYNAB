@@ -102,7 +102,8 @@ def get_transactions_period(http_session: requests.Session, customerid, account_
     Returns:
         array: List of transactions
     """
-    queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
+    queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}".format(account_id,startDate.strftime("%Y-%m-%d"))
+    # queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
     response = http_session.get(queryString
         , headers={'customerId': customerid}
     )
