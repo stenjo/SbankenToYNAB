@@ -15,8 +15,14 @@ Want to try YNAB? Help me out by using this referral link: https://ynab.com/refe
 * Requires package ``requests_oauthlib``:
 ```
 $ pip install requests-oauthlib
-c:> pip install requests-oauthlib
+c:> pip3 install requests-oauthlib
 ```
+* For running publication via MQTT (publish_accounts_status.py) package ``paho-mqtt`` is required
+```
+$ pip install requests-oauthlib
+c:> pip3 install paho-mqtt
+```
+
 For these programs to work, you need to rename the ```api_settings_format.py``` to ```api_settings.py``` and replace all the dummy keys and values with values for your own budget and keys. Edit ``api_settings.py`` and supply your client credentials + customer id.
 
 # Programs for listing, printing and importing
