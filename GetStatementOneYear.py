@@ -34,11 +34,11 @@ def main():
 
     year = input('What year?')
     if year == '':
-        year = 2019
+        year = 2020
 
     year = int(year)
     if year < 2000:
-        year = 2019
+        year = 2020
 
     transactions = get_transactions_year(
         http_session, 

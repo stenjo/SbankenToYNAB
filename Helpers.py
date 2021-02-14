@@ -102,11 +102,12 @@ def get_transactions_period(http_session: requests.Session, customerid, account_
     Returns:
         array: List of transactions
     """
-    queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}".format(account_id,startDate.strftime("%Y-%m-%d"))
-    # queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
-    response = http_session.get(queryString
-        , headers={'customerId': customerid}
-    )
+    queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}".format(account_id, startDate.strftime("%Y-%m-%d"))
+
+    if endDate is not None:
+        queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id, startDate.strftime("%Y-%m-%d"), endDate.strftime("%Y-%m-%d"))
+        
+    response = http_session.get(queryString, headers={'customerId': customerid})
     if response.ok:
         response = response.json()
     else:
@@ -377,7 +378,10 @@ def getPayee(transaction):
     elif transaction['transactionTypeCode'] == 203:  # Nettgiro
         payee = transaction['text'].split(' ')
         try:
-            res = (payee[2] + ' ' + payee[3]).capitalize()
+            if len(payee) > 3:
+                res = (payee[2] + ' ' + payee[3]).capitalize()
+            else:
+                res = transaction['text'].capitalize()
         except IndexError:
             raise ValueError ("Can't extract payee from nettgiro.")
     elif transaction['transactionTypeCode'] == 15:  # Valuta

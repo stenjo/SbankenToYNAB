@@ -22,8 +22,8 @@ mapping = [
     {   
         'Name': 'Brukskonto',          
         'Number': 97000000321, 
-        'ID': 'ABCDEF1234567890ABCDEF0123456789', 
-        'account':'12345678-90ab-cdef-0123-456789abcdef'
+        'ID': 'ABCDEF1234567890ABCDEF0123456789',           # Bank account ID from SBanken
+        'account':'12345678-90ab-cdef-0123-456789abcdef'    # Budget account ID from YNAB budget.
     },
     {   
         'Name': 'Utgiftskonto',        

@@ -46,7 +46,10 @@ api_accounts = ynab.AccountsApi(ynab.ApiClient(configuration))
 http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
 today = datetime.date.today()
 endDate = today
-startDate = today - datetime.timedelta(8)   # Last 8 days
+startDate = today - datetime.timedelta(8)  # Last 8 days
+
+if api_settings.includeReservedTransactions == True:
+    endDate = None
 
 # Get the transactions for all accounts
 accounts = []
@@ -91,7 +94,7 @@ for account_idx in range(len(accounts)):
             logging.error("Exception when calling TransactionsApi->get_transactions_by_account: %s\n" % e)
 
         existing_transactions = api_response.data.transactions
-
+        
         logging.info("Got %i existing YNAB transactions from %s", len(existing_transactions), account_map['Name'])
 
 
