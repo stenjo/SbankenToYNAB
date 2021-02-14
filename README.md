@@ -40,7 +40,7 @@ c:> pip3 install paho-mqtt
 For these programs to work, you need to rename the ```api_settings_format.py``` to ```api_settings.py``` and replace all the dummy keys and values with values for your own budget and keys. Edit ``api_settings.py`` and supply your client credentials + customer id.
 - Fill inn the keys and password in your copy of the `api_settings.py`
 - Run `ListAccountsAndIds.py` to get your list of accounts and ids to further update your `api_settings.py`
-- In YNAB, find `budget_id` and `account` in the url of ynab when the account you want to map is selected:  https://app.youneedabudget.com/\<budget_id>/accounts/\<account>
+- In YNAB, find `budget_id` and `account` in the url of ynab when the account you want to map is selected:  https://app.youneedabudget.com/<budget_id>/accounts/\<account>
 - Do the above for each account you want to map
 
 # Programs for listing, printing and importing
