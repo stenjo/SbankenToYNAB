@@ -46,7 +46,7 @@ api_accounts = ynab.AccountsApi(ynab.ApiClient(configuration))
 http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
 today = datetime.date.today()
 endDate = today
-startDate = today - datetime.timedelta(8)  # Last 8 days
+startDate = today - datetime.timedelta(api_settings.daysBack)  # Last 8 days - unless changed in api_settings
 
 if api_settings.includeReservedTransactions == True:
     endDate = None

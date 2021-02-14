@@ -15,6 +15,9 @@ includeReservedTransactions = False
 # Uncomment if reserved transactions should be flagged with a colour
 # reservedFlagColor = 'Red'
 
+# Days back to sync. Change this number to sync other than 8 days back
+daysBack = 8
+
 # The SBanken to YNAB mappings
 budget_id = '12345ab-6789-abcd-****-fedcba987654' # str | The ID of the Budget.
 api_key = '*********'   # Tha YNAB Api key
