@@ -22,7 +22,7 @@ mapping = [
     {   
         'Name': 'Brukskonto',          
         'Number': 97000000321, 
-        'ID': 'ABCDEF1234567890ABCDEF0123456789',           # Bank account ID from SBanken
+        'ID': 'ABCDEF1234567890ABCDEF0123456789',           # Bank account ID from SBanken. Find it running ListAccountsAnIds.py
         'account':'12345678-90ab-cdef-0123-456789abcdef'    # Budget account ID from YNAB budget.
     },
     {   
@@ -38,7 +38,7 @@ broker = '192.168.0.16'
 balances = [
     {
         'category_name' : 'Dagligvarer',
-        'category_id'   : 'cd7c625b-****-****-****-10bb7e69d29f'
+        'category_id'   : 'cd7c625b-****-****-****-10bb7e69d29f'    # get this from the url to your YNAB application when category is selected
     },
     {
         'category_name' : 'Spise ute',
