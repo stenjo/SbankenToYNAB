@@ -257,8 +257,10 @@ def parseYearlessDate (stringDate, forcedYear):
 def getTransactionDate(transaction):
     """
     Extract the transaction date from an SBanken transaction
+
     Args:
         transaction (object): Transaction from a transaction list
+
     Returns:
         string: Transaction date in the format DD.MM.YYYY
     """
