@@ -170,7 +170,7 @@ for account_idx in range(len(accounts)):
             api_response = api_instance.create_transaction(api_settings.budget_id, {"transactions":ynab_transactions})
         except ApiException as e:
             print("Exception when calling TransactionsApi->create_transaction: %s\n" % e)
-            print (ynab_transactions)
+            #print (ynab_transactions)
 
     if len(ynab_updates) > 0:
         try:

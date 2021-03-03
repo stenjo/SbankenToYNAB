@@ -49,8 +49,6 @@ def get_customer_information(http_session: requests.Session, customerid):
         "https://api.sbanken.no/exec.customers/api/v1/Customers",
         headers={'customerId': customerid}
     )
-    #print(response_object)
-    #print(response_object.text)
     response = response_object.json()
 
     if not response["isError"]:
@@ -259,10 +257,8 @@ def parseYearlessDate (stringDate, forcedYear):
 def getTransactionDate(transaction):
     """
     Extract the transaction date from an SBanken transaction
-
     Args:
         transaction (object): Transaction from a transaction list
-
     Returns:
         string: Transaction date in the format DD.MM.YYYY
     """
@@ -297,7 +293,6 @@ def getYnabTransactionDate(transaction):
     Returns:
         string: Transaction date in the format YYYY-MM-DD
     """
-    #print (transaction)
     if 'beneficiaryName' in transaction:
         d = datetime.datetime.strptime(getPaymentsDate(transaction), "%d.%m.%Y")
         return d.strftime('%Y-%m-%d')
