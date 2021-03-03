@@ -49,8 +49,8 @@ def get_customer_information(http_session: requests.Session, customerid):
         "https://api.sbanken.no/exec.customers/api/v1/Customers",
         headers={'customerId': customerid}
     )
-    print(response_object)
-    print(response_object.text)
+    #print(response_object)
+    #print(response_object.text)
     response = response_object.json()
 
     if not response["isError"]:
