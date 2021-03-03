@@ -3,19 +3,45 @@ Importing data from Sbanken to YNAB using Sbanken API and python 3
 Exported from https://github.com/sbanken
 
 This repo contains functions to fetch data from SBanken on transactions and create an CSV file for import into YNAB (https://www.youneedabudget.com/)
-Enter your details into the api_settings.py and run from there.
-The ListAccountsAndIds.py lists all accounts available to your id and prints the account given name, its account number and id. 
-GetStatementsAllAccounts creates a CSV file for all accounts available the last month.
+Enter your details into the `api_settings.py` and run from there. The various fields are described in comments in the `api_settings.py` file
+The `ListAccountsAndIds.py` lists all accounts available to your id and prints the account given name, its account number and id. 
+`GetStatementsAllAccounts.py` creates a CSV file for all accounts available the last month.
 
-# Setup guide
+Want to try YNAB? Help me out by using this referral link: https://ynab.com/referral/?ref=OKHeNiTm3GB_ss4i&utm_source=customer_referral
+
+# Get what you need from Sbanken
+
+- Activate your SBanken Beta subscription: https://sbanken.no/om-oss/beta/
+- Make sure you have a BankID that works
+- Fill in you api access application form at https://secure.sbanken.no/Personal/ApiBeta/ApiHome. If you feel for it, advocate for SBankenToYNAB.
+- Get your application key, generate your password and allow access at https://secure.sbanken.no/Personal/ApiBeta/Info. Select all read access
+- Your SBanken password will expire after three months and needs to be renewed then.
+
+# Get your YNAB access details.
+- When logged into your YNAB app, go to https://app.youneedabudget.com/settings/developer
+- Create a personal Access Token. This toke will never expire.
+- Fill in your `api_settings.py` where the settings file require an `api_key` 
+
+
+# SW Setup guide
 
 * Requires Python 3
 * Requires package ``requests_oauthlib``:
 ```
 $ pip install requests-oauthlib
-c:> pip install requests-oauthlib
+c:> pip3 install requests-oauthlib
 ```
+* For running publication via MQTT (publish_accounts_status.py) package ``paho-mqtt`` is required
+```
+$ pip install requests-oauthlib
+c:> pip3 install paho-mqtt
+```
+
 For these programs to work, you need to rename the ```api_settings_format.py``` to ```api_settings.py``` and replace all the dummy keys and values with values for your own budget and keys. Edit ``api_settings.py`` and supply your client credentials + customer id.
+- Fill inn the keys and password in your copy of the `api_settings.py`
+- Run `ListAccountsAndIds.py` to get your list of accounts and ids to further update your `api_settings.py`
+- In YNAB, find `budget_id` and `account` in the url of ynab when the account you want to map is selected:  https://app.youneedabudget.com/<budget_id>/accounts/\<account>
+- Do the above for each account you want to map
 
 # Programs for listing, printing and importing
 ## ListAccountsAndIds.py

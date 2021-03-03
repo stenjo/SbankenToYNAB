@@ -49,6 +49,8 @@ def get_customer_information(http_session: requests.Session, customerid):
         "https://api.sbanken.no/exec.customers/api/v1/Customers",
         headers={'customerId': customerid}
     )
+    print(response_object)
+    print(response_object.text)
     response = response_object.json()
 
     if not response["isError"]:
@@ -100,10 +102,12 @@ def get_transactions_period(http_session: requests.Session, customerid, account_
     Returns:
         array: List of transactions
     """
-    queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id,startDate.strftime("%Y-%m-%d"),endDate.strftime("%Y-%m-%d"))
-    response = http_session.get(queryString
-        , headers={'customerId': customerid}
-    )
+    queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}".format(account_id, startDate.strftime("%Y-%m-%d"))
+
+    if endDate is not None:
+        queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id, startDate.strftime("%Y-%m-%d"), endDate.strftime("%Y-%m-%d"))
+        
+    response = http_session.get(queryString, headers={'customerId': customerid})
     if response.ok:
         response = response.json()
     else:
@@ -257,10 +261,10 @@ def parseYearlessDate (stringDate, forcedYear):
 def getTransactionDate(transaction):
     """
     Extract the transaction date from an SBanken transaction
-
+    
     Args:
         transaction (object): Transaction from a transaction list
-
+    
     Returns:
         string: Transaction date in the format DD.MM.YYYY
     """
@@ -271,8 +275,6 @@ def getTransactionDate(transaction):
         d = parseYearlessDate(transaction['text'], forcedYear=d.year)
     elif code == 714 and transaction['cardDetailsSpecified']: # Visa
         d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'])
-    elif code == 714: # Vi skal aldri bruke interest rate for Visa, vi har hatt meningsløse tilfeller med interest date en måned i forveien
-        d = accountingDate
     # In case transaction date (purchaseDate og date from text) is more than 300 days away from the
     # accountingDate in the future, substract 1 year from purchaseDate in order to get correct transaction date
     delta = accountingDate - d
@@ -281,9 +283,15 @@ def getTransactionDate(transaction):
             d = parseYearlessDate(transaction['text'], forcedYear=(d.year-1))
         elif code == 714 and transaction['cardDetailsSpecified']:
             d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'], substractYear=True)
-        elif code == 714: # Og her kommer det å feile
+        else:
+            # Use accounting date if nothing else. Make sure the date is not in the future
             d = accountingDate
-    return d.strftime('%d.%m.%Y')
+
+    if d > datetime.datetime.today():
+        return accountingDate.strftime('%d.%m.%Y')
+    else:
+        return d.strftime('%d.%m.%Y')
+
 
 def getYnabTransactionDate(transaction):
     """
@@ -362,15 +370,18 @@ def getPayee(transaction):
 
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
         if transaction['otherAccountNumberSpecified'] == True:
-            pprint.pprint(transaction)
-        if transaction['amount'] > 0:
-            res = 'Transfer from:'
-        else:
-            res = 'Transfer to:'
+            #pprint.pprint(transaction)
+            if transaction['amount'] > 0:
+                res = 'Transfer from:'
+            else:
+                res = 'Transfer to:'
     elif transaction['transactionTypeCode'] == 203:  # Nettgiro
         payee = transaction['text'].split(' ')
         try:
-            res = (payee[2] + ' ' + payee[3]).capitalize()
+            if len(payee) > 3:
+                res = (payee[2] + ' ' + payee[3]).capitalize()
+            else:
+                res = transaction['text'].capitalize()
         except IndexError:
             raise ValueError ("Can't extract payee from nettgiro.")
     elif transaction['transactionTypeCode'] == 15:  # Valuta

@@ -15,6 +15,9 @@ includeReservedTransactions = False
 # Uncomment if reserved transactions should be flagged with a colour
 # reservedFlagColor = 'Red'
 
+# Days back to sync. Change this number to sync other than 8 days back
+daysBack = 8
+
 # The SBanken to YNAB mappings
 budget_id = '12345ab-6789-abcd-****-fedcba987654' # str | The ID of the Budget.
 api_key = '*********'   # Tha YNAB Api key
@@ -22,8 +25,8 @@ mapping = [
     {   
         'Name': 'Brukskonto',          
         'Number': 97000000321, 
-        'ID': 'ABCDEF1234567890ABCDEF0123456789', 
-        'account':'12345678-90ab-cdef-0123-456789abcdef'
+        'ID': 'ABCDEF1234567890ABCDEF0123456789',           # Bank account ID from SBanken. Find it running ListAccountsAnIds.py
+        'account':'12345678-90ab-cdef-0123-456789abcdef'    # Budget account ID from YNAB budget.
     },
     {   
         'Name': 'Utgiftskonto',        
@@ -38,7 +41,7 @@ broker = '192.168.0.16'
 balances = [
     {
         'category_name' : 'Dagligvarer',
-        'category_id'   : 'cd7c625b-****-****-****-10bb7e69d29f'
+        'category_id'   : 'cd7c625b-****-****-****-10bb7e69d29f'    # get this from the url to your YNAB application when category is selected
     },
     {
         'category_name' : 'Spise ute',
