@@ -1,5 +1,6 @@
 import csv
-from  Helpers import *
+from sbanken.Sbanken import Sbanken
+from helpers.Helpers import getAccounts, getTransactionDate, getPayee, getMemo, getOut, getIn
 
 
 def main():
@@ -7,20 +8,13 @@ def main():
     import api_settings
     import pprint
 
-    http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
+    sbanken = Sbanken(api_settings.CUSTOMERID, api_settings.CLIENTID, api_settings.SECRET)
 
-    accounts = get_accounts(
-        http_session, 
-        api_settings.CUSTOMERID)
-
+    accounts = getAccounts(sbanken)
 
     for account in accounts:
 
-        transactions = get_transactions(
-            http_session, 
-            api_settings.CUSTOMERID,
-            account['accountId'],
-            1)
+        transactions = sbanken.GetTransactions(account['accountId'],1)
         # pprint.pprint(transactions)
 
         with open(account['name']+'_'+account['accountNumber']+'.csv', 'w', encoding='utf-8') as csvfile:

@@ -1,32 +1,16 @@
 import csv
-from  Helpers import get_transactions_year,create_authenticated_http_session,get_accounts,get_transactions,getTransactionDate,getPayee,getMemo, getOut, getIn
-
-def getAccount(http_session, customerId, accountNo):
-    accounts = get_accounts(
-        http_session, 
-        customerId)
-
-    for account in accounts:
-        if account['accountNumber'] == accountNo:
-            return account
-    
-    return None
-
+from sbanken.Sbanken import Sbanken
+from  helpers.Helpers import getAccounts, getTransactionDate,getPayee,getMemo, getOut, getIn
 
 def main():
     # enable_debug_logging()
     import api_settings
     import pprint
 
-    http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
-
-    # customer_info = get_customer_information(http_session, api_settings.CUSTOMERID)
-    # pprint.pprint(customer_info)
-
-    # pprint.pprint(accounts)
+    sbanken = Sbanken(api_settings.CUSTOMERID, api_settings.CLIENTID, api_settings.SECRET)
 
     accountNo = input('What is the account number:')
-    account = getAccount(http_session, api_settings.CUSTOMERID, accountNo)
+    account = getAccounts(sbanken, accountNo)
     
     if account == None:
         print('Account not found!')
@@ -40,11 +24,7 @@ def main():
     if year < 2000:
         year = 2020
 
-    transactions = get_transactions_year(
-        http_session, 
-        api_settings.CUSTOMERID,
-        account['accountId'],
-        year)
+    transactions = sbanken.GetTransactionsForYear(account['accountId'],year)
     # pprint.pprint(transactions)
 
     with open(account['name']+'_'+account['accountNumber']+'.csv', 'w', encoding='utf-8') as csvfile:

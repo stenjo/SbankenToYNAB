@@ -1,7 +1,3 @@
-from oauthlib.oauth2 import BackendApplicationClient
-import requests
-from requests_oauthlib import OAuth2Session
-import urllib.parse
 import csv
 import datetime
 import pprint
@@ -19,199 +15,29 @@ def enable_debug_logging():
     requests_log.setLevel(logging.DEBUG)
     requests_log.propagate = True
 
-
-def create_authenticated_http_session(client_id, client_secret) -> requests.Session:
-    oauth2_client = BackendApplicationClient(client_id=urllib.parse.quote(client_id))
-    session = OAuth2Session(client=oauth2_client)
-    session.fetch_token(
-        token_url='https://auth.sbanken.no/identityserver/connect/token',
-        client_id=urllib.parse.quote(client_id),
-        client_secret=urllib.parse.quote(client_secret)
-    )
-    return session
-
-
-def get_customer_information(http_session: requests.Session, customerid):
+def getAccounts(api, accountNo=None):
     """
-    Get customer information SBanken given by the customerid
-    
+    Gets all (or specific) accounts from api.get_accounts
+
     Args:
-        http_session (requests.Session): [description]
-        customerid ([type]): [description]
-    
-    Raises:
-        RuntimeError: [description]
-    
-    Returns:
-        [type]: [description]
-    """
-    response_object = http_session.get(
-        "https://api.sbanken.no/exec.customers/api/v1/Customers",
-        headers={'customerId': customerid}
-    )
-    print(response_object)
-    print(response_object.text)
-    response = response_object.json()
+        api (http_session): Sbanken api
+        accountNo (string): Account number to look for. If None (default) then all accounts returned
 
-    if not response["isError"]:
-        return response["item"]
+    Returns:
+        accounts list: accounts retrieved from Sbanken. All (if accountNO is None) or the one given by accountNo
+        singular account if specified account is found
+
+    """
+    accounts = api.GetAccounts()
+
+    if accountNo is not None:
+        for account in accounts:
+            if account['accountNumber'] == accountNo:
+                return account
+        return None
     else:
-        raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
-
-
-def get_accounts(http_session: requests.Session, customerid):
-    """
-    Fetch all accounts from SBanken based on customerid
-
-    Args:
-        http_session (requests.Session): [description]
-        customerid ([type]): [description]
+        return accounts
     
-    Raises:
-        RuntimeError: [description]
-    
-    Returns:
-        [type]: [description]
-    """
-    response = http_session.get(
-        "https://api.sbanken.no/exec.bank/api/v1/Accounts",
-        headers={'customerId': customerid}
-    ).json()
-
-    if not response["isError"]:
-        return response["items"]
-    else:
-        raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
-
-
-def get_transactions_period(http_session: requests.Session, customerid, account_id, startDate, endDate):
-    """
-    Get all transactions from SBanken for a given time period
-    
-    Args:
-        http_session (requests.Session): [description]
-        customerid (string): The customer id of the user
-        account_id (string): The account id where transactions are read
-        startDate (Date): From date
-        endDate (Date): To date
-    
-    Raises:
-        RuntimeError: Error reading from API
-        RuntimeError: 
-            
-    Returns:
-        array: List of transactions
-    """
-    queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}".format(account_id, startDate.strftime("%Y-%m-%d"))
-
-    if endDate is not None:
-        queryString = "https://api.sbanken.no/exec.bank/api/v1/Transactions/{}?length=1000&startDate={}&endDate={}".format(account_id, startDate.strftime("%Y-%m-%d"), endDate.strftime("%Y-%m-%d"))
-        
-    response = http_session.get(queryString, headers={'customerId': customerid})
-    if response.ok:
-        response = response.json()
-    else:
-        raise RuntimeError("Request to transactions API returned with HTTP status code {} with reason {}. Request was {}".format(response.status_code, response.reason, queryString))
-
-    if not response["isError"]:
-        return response["items"]
-    else:
-        raise RuntimeError("{} {}, Request was {}".format(response["errorType"], response["errorMessage"], queryString))   
-
-def get_standing_orders(http_session: requests.Session, customerid, account_id):
-    """
-    Get all future repeated future payments from SBanken API
-    
-    Args:
-        http_session (requests.Session): Current session
-        customerid (string): Id of the customer
-        account_id (string): Id of the account
-    
-    Raises:
-        RuntimeError: API error
-    
-    Returns:
-        array: List of standing order payments being paid on date 
-    """
-    # print(customerid)
-    # print(account_id)
-    response = http_session.get(
-        "https://api.sbanken.no/exec.bank/api/v1/StandingOrders/{}".format(account_id),
-        headers={'customerId': customerid}
-    ).json()
-
-    if not response["isError"]:
-        return response["items"]
-    else:
-        raise RuntimeError("{} {}".format(response["errorType"], response["errorMessage"]))
-
-def get_payments(http_session: requests.Session, customerid, account_id):
-    """
-    Get all future payments from SBanken API
-    
-    Args:
-        http_session (requests.Session): Current session
-        customerid (string): ID of the customer
-        account_id (string): Id of th account
-    
-    Raises:
-        RuntimeError: API error
-    
-    Returns:
-        array: List of future payments being paid on date
-    """
-    queryString = "https://api.sbanken.no/exec.bank/api/v1/Payments/{}".format(account_id)
-    response = http_session.get(
-        queryString,
-        headers={'customerId': customerid}
-    ).json()
-
-    if not response["isError"]:
-        return response["items"]
-    else:
-        raise RuntimeError("{} {}, Request was {}".format(response["errorType"], response["errorMessage"], queryString))
-
-def get_transactions(http_session: requests.Session, customerid, account_id, months):
-    """
-    Get transactions for a given number of months back up and until now
-    
-    Args:
-        http_session (requests.Session): Current session
-        customerid (string): Id of the customer
-        account_id (string): Id of the account
-        months (integer): Number of months back to start getting transactions. There is a limit of 12 months 
-    
-    Returns:
-        arrya: List of transactions
-    """
-    today = datetime.date.today()
-    endDate = today - datetime.timedelta(0)
-    startDate = today - datetime.timedelta(30*months)
-
-    return get_transactions_period(http_session, customerid, account_id, startDate, endDate)
-
-
-def get_transactions_year(http_session: requests.Session, customerid, account_id, year):
-    """
-    Get transactions from a full year
-    
-    Args:
-        http_session (requests.Session): Current session
-        customerid (string): Id of the customer
-        account_id (string): Id of the account
-        year (int): The year 
-    
-    Returns:
-        array: Transactions from jan 1st to dec 31st the given year
-    """
-    today = datetime.date.today()
-    endDate = datetime.date(year, 12, 31)
-    if today < endDate:
-        endDate = today
-
-    startDate = datetime.date(year, 1, 1)
-
-    return get_transactions_period(http_session, customerid, account_id, startDate, endDate)
 
 def parseVisaDate (stringDate, substractYear=False):
     """
@@ -369,7 +195,7 @@ def getPayee(transaction):
             res = (payee[1]+ ' ' + payee[2]).capitalize()
 
     elif transaction['transactionTypeCode'] == 200:  # Overføringe egen konto
-        if transaction['otherAccountNumberSpecified'] == True:
+        if 'otherAccountNumberSpecified' in transaction and transaction['otherAccountNumberSpecified'] == True:
             #pprint.pprint(transaction)
             if transaction['amount'] > 0:
                 res = 'Transfer from:'
@@ -405,7 +231,7 @@ def getMemo(transaction):
         transactionId = ' tId:'+transaction['cardDetails']['transactionId']
     
     isReservation = ''
-    if transaction['isReservation'] == True:
+    if 'isReservation' in transaction and transaction['isReservation'] == True:
         isReservation = 'Reserved: '
 
     transactionMemo = ''
@@ -449,4 +275,30 @@ def getYnabSyncId(transaction):
 def getPaymentsDate(payment):
     d = datetime.datetime.strptime(payment['dueDate'].split('T')[0], "%Y-%m-%d")
     return d.strftime('%d.%m.%Y')
+
+
+def findMatchingTransfer(original_account, transaction, accounts_transactions_list, accounts, account_references):
+    # print(transaction)
+    compare = transaction.copy()
+    compare['amount'] = transaction['amount'] * -1
+    for account_idx in range(len(accounts)):
+        if accounts[account_idx]['ID'] != original_account:
+            for t in accounts_transactions_list[account_idx]:
+                if getYnabSyncId(t) == getYnabSyncId(compare):
+                    # reference = [a for a in account_references if a['id'] == accounts[account_idx]['account']]
+                    reference = []
+
+                    for ar in account_references:
+                        if ar.id == accounts[account_idx]['account']:
+                            reference.append(ar)
+
+                    d = {}
+                    d['Name'] = accounts[account_idx]['Name']
+                    d['account'] = accounts[account_idx]['account']
+                    if len(reference) > 0 and hasattr(reference[0], 'transfer_payee_id'):
+                        d['payee_id'] = reference[0].transfer_payee_id
+                    else:
+                        d['payee_id'] = None
+
+                    return d
 
