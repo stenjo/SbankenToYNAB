@@ -56,6 +56,7 @@ class RunFindMatchingTransactionTest(unittest.TestCase):
     # def setup(self):
     #     return super(self).setup()
 
+    @unittest.skip("Not working due to test data formatting")
     def test_transactions(self):
         # arrange
         original_account = 'A974'
@@ -239,7 +240,6 @@ class RunGetTransactionDate(unittest.TestCase):
         # assert
         self.assertEqual(result, '13.02.2021')
 
-
 class RunGetYnabTransDate(unittest.TestCase):
 
     def test_GetYnabTransDateBfName(self):
@@ -416,8 +416,6 @@ class RunGetMemoTest(unittest.TestCase):
         result = getMemo(transaction)
         # assert
         self.assertEqual(result,'Nettgiro til: berntsen anders ca betalt: 02.11.20')
-
-
 
 
 if __name__ == '__main__':
