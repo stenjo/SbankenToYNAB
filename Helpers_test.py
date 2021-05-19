@@ -5,7 +5,7 @@ import unittest
 
 #### Helpers tests
 from helpers.Helpers import getPayee, findMatchingTransfer, parseVisaDate, getTransactionDate, parseYearlessDate, getYnabTransactionDate, getMemo
-from transactions import *
+from testdata.transactions import *
 
 
 class RunGetNameTest(unittest.TestCase):
