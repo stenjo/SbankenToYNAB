@@ -1,0 +1,16 @@
+[Unit]
+Description=Syncs Sbanken to YNAB
+Wants=sbanken-sync.timer
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=appropriate-username
+Group=appropriate-group
+
+WorkingDirectory=/path/to/SbankenToYNAB
+
+ExecStart=/usr/bin/python3 sync_accounts.py
+
+[Install]
+WantedBy=multi-user.target
