@@ -1,6 +1,6 @@
 import csv
 import pprint
-from  Helpers import create_authenticated_http_session,get_accounts
+from sbanken.Sbanken import Sbanken
 
 
 def main():
@@ -8,11 +8,8 @@ def main():
     import api_settings
     # import pprint
 
-    http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
-
-    accounts = get_accounts(
-        http_session, 
-        api_settings.CUSTOMERID)
+    sbanken = Sbanken(api_settings.CUSTOMERID, api_settings.CLIENTID, api_settings.SECRET)
+    accounts = sbanken.GetAccounts()
 
     for account in accounts:
         print('Name:', account['name'], 'Number:', account['accountNumber'], 'ID:', account['accountId'])

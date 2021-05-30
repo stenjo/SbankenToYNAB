@@ -3,21 +3,16 @@ import pprint
 import api_settings
 import time
 import paho.mqtt.client as mqtt
-from  Helpers import create_authenticated_http_session,get_accounts
+from sbanken.Sbanken import Sbanken
 
 Broker = api_settings.broker
 
 def main():
     # enable_debug_logging()
     import api_settings
-    # import pprint
 
-    http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
-
-    accounts = get_accounts(
-        http_session, 
-        api_settings.CUSTOMERID)
-
+    sbanken = Sbanken(api_settings.CUSTOMERID, api_settings.CLIENTID, api_settings.SECRET)
+    accounts = sbanken.GetAccounts()
     ids = [x['ID'] for x in api_settings.account_statuses]
 
     try:

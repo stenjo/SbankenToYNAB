@@ -28,12 +28,12 @@ Want to try YNAB? Help me out by using this referral link: https://ynab.com/refe
 * Requires Python 3
 * Requires package ``requests_oauthlib``:
 ```
-$ pip install requests-oauthlib
+$ pip3 install requests-oauthlib
 c:> pip3 install requests-oauthlib
 ```
 * For running publication via MQTT (publish_accounts_status.py) package ``paho-mqtt`` is required
 ```
-$ pip install requests-oauthlib
+$ pip3 install paho-mqtt
 c:> pip3 install paho-mqtt
 ```
 

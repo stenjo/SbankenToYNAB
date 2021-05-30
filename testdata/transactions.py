@@ -51,7 +51,7 @@ credit_transaction = {
     'interestDate': '2021-02-13T00:00:00',
     'otherAccountNumberSpecified': False,
     'amount': -200.0,
-    'text': 'MESTER GRèNN 20',
+    'text': 'MESTER GRøNN 20',
     'transactionType': 'Bekreftet VISA',
     'transactionTypeCode': 946,
     'transactionTypeText': '',
@@ -185,4 +185,4 @@ nettgiro_actual_transaction = {
     'transactionTypeText': 'NETTGIRO'}
 
 test_transaction_list = [visa_transaction, overf_transaction, credit_transaction, reserved_transaction, vipps_transactiion, kolumbus_actual_transaction, google_actual_transaction]
-test_trans_result_list = ['Stavanger parke', 'Overføring mellom egne kontoer', 'Mester grènn 20', 'Rogaland taxi a', 'Vipps*jatta vgs. tur idre', 'Kolumbus as', 'Google *google']
+test_trans_result_list = ['Stavanger parke', 'Overføring mellom egne kontoer', 'Mester grønn 20', 'Rogaland taxi a', 'Vipps*jatta vgs. tur idre', 'Kolumbus as', 'Google *google']

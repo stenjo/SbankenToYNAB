@@ -2,51 +2,32 @@
 # https://support.youneedabudget.com/t/y72kjg
 
 import csv
-from  Helpers import create_authenticated_http_session,get_accounts,get_standing_orders,get_payments,get_transactions,getTransactionDate,getPayee,getMemo, getOut, getIn, getPaymentsDate
-
-def getAccount(http_session, customerId, accountNo):
-    accounts = get_accounts(
-        http_session, 
-        customerId)
-
-    for account in accounts:
-        if account['accountNumber'] == accountNo:
-            return account
-    
-    return None
-
+from sbanken.Sbanken import Sbanken
+from helpers.Helpers import getPaymentsDate, getAccounts
 
 def main():
     # enable_debug_logging()
     import api_settings
     import pprint
 
-    http_session = create_authenticated_http_session(api_settings.CLIENTID, api_settings.SECRET)
+    sbanken = Sbanken(api_settings.CUSTOMERID, api_settings.CLIENTID, api_settings.SECRET)
 
-    # customer_info = get_customer_information(http_session, api_settings.CUSTOMERID)
+    # customer_info = sbanken.GetCustomerInfo()
     # pprint.pprint(customer_info)
 
     # pprint.pprint(accounts)
 
-    # accountNo = input('What is the account number:')
-    accountNo = '97104496257'
-    account = getAccount(http_session, api_settings.CUSTOMERID, accountNo)
+    accountNo = input('What is the account number:')
+    account = getAccounts(sbanken, accountNo)
     
     if account == None:
         print('Account not found!')
         exit(1)
 
-    # stOrders = get_standing_orders(
-    #     http_session,
-    #     api_settings.CUSTOMERID,
-    #     account['accountId']
-    # )
+    # stOrders = sbanken.GetStandingOrders(account['accountId'])
     # pprint.pprint(stOrders)
 
-    payments = get_payments(
-        http_session, 
-        api_settings.CUSTOMERID,
-        account['accountId'])
+    payments = sbanken.GetPayments(account['accountId'])
     # pprint.pprint(payments)
 
     with open(account['name']+'_'+account['accountNumber']+'_Payments.csv', 'w', encoding='utf-8') as csvfile:

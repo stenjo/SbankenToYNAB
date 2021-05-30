@@ -1,0 +1,9 @@
+[Unit]
+Description=SbankenToYNAB sync timer
+Requires=sbanken-sync.service
+
+[Timer]
+OnCalendar=*-*-* 01:00:00
+
+[Install]
+WantedBy=timers.target
