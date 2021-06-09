@@ -14,7 +14,8 @@ Want to try YNAB? Help me out by using this referral link: https://ynab.com/refe
 - Activate your SBanken Beta subscription: https://sbanken.no/om-oss/beta/
 - Make sure you have a BankID that works
 - Fill in you api access application form at https://secure.sbanken.no/Personal/ApiBeta/ApiHome. If you feel for it, advocate for SBankenToYNAB.
-- Get your application key, generate your password and allow access at https://secure.sbanken.no/Personal/ApiBeta/Info. Select all read access
+- Get your application key, generate your password and allow access at https://secure.sbanken.no/Personal/ApiBeta/Info. Select all read access. 
+- Make sure you have selected: **Grants access to perform operations on APIBeta APIs (aka. developer portal)**
 - Your SBanken password will expire after three months and needs to be renewed then.
 
 # Get your YNAB access details.
