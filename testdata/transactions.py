@@ -30,7 +30,33 @@ visa_transaction = {
         'transactionId': '481000000001540'
         },
     'transactionDetailSpecified': False}
-    
+
+visa_transaction_long_date = {
+  'accountingDate': '2021-06-15T00:00:00',
+  'amount': -2790.0,
+  'cardDetails': {'cardNumber': '*0392',
+                  'currencyAmount': 2790.0,
+                  'currencyRate': 1.0,
+                  'merchantCategoryCode': '5732',
+                  'merchantCategoryDescription': 'Elektronikk',
+                  'merchantCity': 'Lorenskog',
+                  'merchantName': 'Elkjop.no',
+                  'originalCurrencyCode': 'NOK',
+                  'purchaseDate': '2022-06-14T00:00:00',
+                  'transactionId': '4811655705445700'},
+  'cardDetailsSpecified': True,
+  'interestDate': '2021-07-20T00:00:00',
+  'isReservation': False,
+  'otherAccountNumberSpecified': False,
+  'reservationType': None,
+  'source': 'Archive',
+  'text': '*0392 14.06 NOK 2790.00 Elkjop.no Kurs: 1.0000',
+  'transactionDetailSpecified': False,
+  'transactionType': 'VISA VARE',
+  'transactionTypeCode': 714,
+  'transactionTypeText': 'VISA VARE'}
+
+
 overf_transaction = {
     'accountingDate': '2021-02-09T00:00:00',
     'interestDate': '2021-02-09T00:00:00',

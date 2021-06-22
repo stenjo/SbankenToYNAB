@@ -241,7 +241,7 @@ class Sbanken:
         today = datetime.date.today()
         endDate = datetime.date(year, 12, 31)
         if today < endDate:
-            endDate = today
+            endDate = today - datetime.timedelta(days=1)
 
         startDate = datetime.date(year, 1, 1)
 
