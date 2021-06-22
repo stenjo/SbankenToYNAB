@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 # from sbanken.Sbanken import Sbanken
 
 #### Helpers tests
-from helpers.Helpers import getPayee, findMatchingTransfer, parseVisaDate, getTransactionDate, parseYearlessDate, getYnabTransactionDate, getMemo, getAccounts
+from helpers.Helpers import getPayee, findMatchingTransfer, parseVisaDate, getTransactionDate, parseYearlessDate, getYnabTransactionDate, getMemo, getAccounts, getIn, getOut, getIntAmountMilli, getYnabSyncId
 from testdata.transactions import *
 
 
@@ -513,6 +513,86 @@ class RunGetAccountsTest(unittest.TestCase):
 
         # Assert
         self.assertEqual(result, None )
+
+class RunGetInOutTest(unittest.TestCase):
+    def test_getOut_negative(self):
+        # arrange
+        transaction = {'amount': -49.0}
+
+        # act
+        result = getOut(transaction)
+
+        # assert
+
+        self.assertEqual(result, 49)
+
+    def test_getOut_positive(self):
+        # arrange
+        transaction = {'amount': 49.0}
+
+        # act
+        result = getOut(transaction)
+
+        # assert
+
+        self.assertEqual(result, '')
+
+    def test_getIn_negative(self):
+        # arrange
+        transaction = {'amount': -49.0}
+
+        # act
+        result = getIn(transaction)
+
+        # assert
+
+        self.assertEqual(result, '')
+
+    def test_getIn_positive(self):
+        # arrange
+        transaction = {'amount': 49.0}
+
+        # act
+        result = getIn(transaction)
+
+        # assert
+
+        self.assertEqual(result, 49)
+
+class RunGetIntAmountMilliTest(unittest.TestCase):
+
+    def test_getAmountMilli_negative(self):
+        # arrange
+        transaction = {'amount': -49.0}
+
+        # act
+        result = getIntAmountMilli(transaction)
+
+        # assert
+        self.assertEqual(result, -49000)
+
+    def test_getAmountMilli_positive(self):
+        # arrange
+        transaction = {'amount': 49.0}
+
+        # act
+        result = getIntAmountMilli(transaction)
+
+        # assert
+        self.assertEqual(result, 49000)
+
+class RunGetYnabSyncId(unittest.TestCase):
+
+    def test_GetYnabSyncId_regular(self):
+        # arrange
+        transaction = nettgiro_actual_transaction_short_text 
+
+        # act
+        result = getYnabSyncId(transaction)
+
+        # assert
+        self.assertEqual(result, 'YNAB:-1500000:2020-11-02:1')
+
 
 
 if __name__ == '__main__':
