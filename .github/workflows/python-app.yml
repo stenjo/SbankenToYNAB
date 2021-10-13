@@ -33,4 +33,9 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest
+        pytest --cov
+
+    - name: Codecov
+      uses: codecov/codecov-action@v2.1.0
+      with:
+        files: ./cov.xml
