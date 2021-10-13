@@ -319,3 +319,10 @@ def findMatchingTransfer(original_account, transaction, accounts_transactions_li
 
                     return d
 
+def createYnabTransaction(ynab, account, sBTrans):
+    return ynab.Transaction(
+            getYnabTransactionDate(sBTrans), 
+            getIntAmountMilli(sBTrans), 
+            account, 
+            getMemo(sBTrans),
+            getYnabSyncId(sBTrans))

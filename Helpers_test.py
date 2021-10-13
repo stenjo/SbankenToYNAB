@@ -593,7 +593,34 @@ class RunGetYnabSyncId(unittest.TestCase):
         # assert
         self.assertEqual(result, 'YNAB:-1500000:2020-11-02:1')
 
+class RunCreateYnabTransaction(unittest.TestCase):
 
+    def test_CreateYnabTransaction(self):
+        # arrange
+        ynab = MagicMock()
+        ynab.Transaction = MagicMock(return_value=True)
+        transaction = {
+            "accountingDate": "2021-10-07T00:00:00",
+            "interestDate": "2021-10-07T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": -31.45,
+            "text": "EasyPark AS",
+            "transactionType": "Bekreftet VISA",
+            "transactionTypeCode": 946,
+            "transactionTypeText": "",
+            "isReservation": True,
+            "reservationType": "VisaReservation",
+            "source": "AccountStatement",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+        }
+        
+        # act
+        result = createYnabTransaction(ynab, 'account', transaction)
+
+        # assert
+        self.assertEqual(result, True)
+        # self.assertEqual(result.import_id, 'YNAB:-31450:2021-10-07')
 
 if __name__ == '__main__':
     unittest.main()
