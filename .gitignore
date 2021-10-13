@@ -6,7 +6,7 @@ ynab/ynab/__pycache__/*
 ynab/__pycache__/*
 __pycache__/*
 api_settings.py
-api_settings.py
+*settings.py*
 sync_accounts.1.py
 bash_script.sh
 api_settings_temp.py
