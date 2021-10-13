@@ -1,0 +1,3 @@
+ignore:
+  - "ynab"  # ignore folders and all its contents
+  - "sbanken"  # ignore folders and all its contents
