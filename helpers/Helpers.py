@@ -319,10 +319,30 @@ def findMatchingTransfer(original_account, transaction, accounts_transactions_li
 
                     return d
 
-def createYnabTransaction(ynab, account, sBTrans):
-    return ynab.Transaction(
+def createYnabTransaction(ynab, account, sBTrans, settings):
+    trans = ynab.Transaction(
             getYnabTransactionDate(sBTrans), 
             getIntAmountMilli(sBTrans), 
             account, 
             getMemo(sBTrans),
             getYnabSyncId(sBTrans))
+
+    try:
+        trans.payee_name = getPayee(sBTrans)
+        # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
+    except ValueError:
+        pass
+
+    if 'transactionFlagColor' in vars(settings) and settings.transactionFlagColor != None:
+        trans.flag_color = settings.transactionFlagColor
+
+    if 'reservedFlagColor' in vars(settings) and settings.reservedFlagColor != None and (sBTrans.get('isReservation') == True or (sBTrans.get('otherAccountNumberSpecified') == False and sBTrans.get('source') != 'Archive')):
+        trans.flag_color = settings.reservedFlagColor
+
+    return trans
+
+def ignoreReserved(trans, settings):
+    if settings.includeReservedTransactions != True:
+        if trans.get('isReservation') == True: # or transaction_item.get('otherAccountNumberSpecified') == False:
+            return  True
+    return False

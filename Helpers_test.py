@@ -1,6 +1,7 @@
 # Testing the SBanken YNAB integration
 import unittest
 from unittest.mock import MagicMock
+from ynab.models.transaction_detail import TransactionDetail
 # from sbanken.Sbanken import Sbanken
 
 #### Helpers tests
@@ -595,10 +596,8 @@ class RunGetYnabSyncId(unittest.TestCase):
 
 class RunCreateYnabTransaction(unittest.TestCase):
 
-    def test_CreateYnabTransaction(self):
+    def test_CreateYnabTransaction_reserved(self):
         # arrange
-        ynab = MagicMock()
-        ynab.Transaction = MagicMock(return_value=True)
         transaction = {
             "accountingDate": "2021-10-07T00:00:00",
             "interestDate": "2021-10-07T00:00:00",
@@ -614,13 +613,195 @@ class RunCreateYnabTransaction(unittest.TestCase):
             "cardDetailsSpecified": False,
             "transactionDetailSpecified": False
         }
+
+        ynabTransaction = TransactionDetail(
+            date = '2021-10-07', 
+            amount = -31450, 
+            account_id = 'a99f18a5-c377-4252-85bc-4ca380f24914', 
+            account_name = 'Kredittkort',
+            cleared = 'uncleared',
+            approved = False)
+
+        class Settings:
+            def __init__(self):
+              self.transactionFlagColor = 'blue'
+              self.reservedFlagColor = 'red'
+
+        settings = Settings()
+
+        ynab = MagicMock()
+        ynab.Transaction = MagicMock(return_value=ynabTransaction)
         
         # act
-        result = createYnabTransaction(ynab, 'account', transaction)
+        result = createYnabTransaction(ynab, 'account', transaction, settings)
 
         # assert
-        self.assertEqual(result, True)
-        # self.assertEqual(result.import_id, 'YNAB:-31450:2021-10-07')
+        # self.assertEqual(result, True)
+        ynab.Transaction.assert_called_once_with('2021-10-07',-31450,'account','Reserved: Easypark as','YNAB:-31450:2021-10-07:1')
+        self.assertEqual(result.flag_color, 'red')
+
+    def test_CreateYnabTransaction_archived(self):
+        # arrange
+        transaction =     {
+            "accountingDate": "2021-10-12T00:00:00",
+            "interestDate": "2021-10-12T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": 3000.0,
+            "text": "Fra: Tuva Sofie Johnsen",
+            "transactionType": "StraksOvf",
+            "transactionTypeCode": 561,
+            "transactionTypeText": "StraksOvf",
+            "isReservation": False,
+            "reservationType": None,
+            "source": "Archive",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+        }
+
+        ynabTransaction = TransactionDetail(
+            date = '2021-10-07', 
+            amount = -31450, 
+            account_id = 'a99f18a5-c377-4252-85bc-4ca380f24914', 
+            account_name = 'Kredittkort',
+            cleared = 'uncleared',
+            approved = False)
+
+        class Settings:
+            def __init__(self):
+              self.transactionFlagColor = 'blue'
+              self.reservedFlagColor = 'red'
+
+        settings = Settings()
+
+        ynab = MagicMock()
+        ynab.Transaction = MagicMock(return_value=ynabTransaction)
+        
+        # act
+        result = createYnabTransaction(ynab, 'account', transaction, settings)
+
+        # assert
+        # self.assertEqual(result, True)
+        ynab.Transaction.assert_called_once_with('2021-10-12',3000000,'account','Fra: tuva sofie johnsen','YNAB:3000000:2021-10-12:1')
+        self.assertEqual(result.flag_color, 'blue')
+
+class RunIgnoreReserved(unittest.TestCase):
+    def test_IgnoreReserved_WhenTransIsReservationAndSettingsIncludes_ThenFalse(self):
+        # arrange
+        sBTrans = {
+            "accountingDate": "2021-10-07T00:00:00",
+            "interestDate": "2021-10-07T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": -31.45,
+            "text": "EasyPark AS",
+            "transactionType": "Bekreftet VISA",
+            "transactionTypeCode": 946,
+            "transactionTypeText": "",
+            "isReservation": True,
+            "reservationType": "VisaReservation",
+            "source": "AccountStatement",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+        }
+        class Settings:
+            def __init__(self):
+              self.includeReservedTransactions = True
+
+        settings = Settings()
+
+        # act
+        result = ignoreReserved(sBTrans, settings)
+
+        # assert
+        self.assertFalse(result)
+
+    def test_IgnoreReserved_WhenTransIsNoReservationAndSettingsIncludes_ThenFalse(self):
+        # arrange
+        sBTrans = {
+            "accountingDate": "2021-10-12T00:00:00",
+            "interestDate": "2021-10-12T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": 3000.0,
+            "text": "Fra: Tuva Sofie Johnsen",
+            "transactionType": "StraksOvf",
+            "transactionTypeCode": 561,
+            "transactionTypeText": "StraksOvf",
+            "isReservation": False,
+            "reservationType": None,
+            "source": "Archive",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+        }
+        class Settings:
+            def __init__(self):
+              self.includeReservedTransactions = True
+
+        settings = Settings()
+
+        # act
+        result = ignoreReserved(sBTrans, settings)
+
+        # assert
+        self.assertFalse(result)
+
+    def test_IgnoreReserved_WhenTransIsNotReservationAndSettingsNotIncludes_ThenFalse(self):
+        # arrange
+        sBTrans = {
+            "accountingDate": "2021-10-12T00:00:00",
+            "interestDate": "2021-10-12T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": 3000.0,
+            "text": "Fra: Tuva Sofie Johnsen",
+            "transactionType": "StraksOvf",
+            "transactionTypeCode": 561,
+            "transactionTypeText": "StraksOvf",
+            "isReservation": False,
+            "reservationType": None,
+            "source": "Archive",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+         }
+        class Settings:
+            def __init__(self):
+              self.includeReservedTransactions = False
+
+        settings = Settings()
+
+        # act
+        result = ignoreReserved(sBTrans, settings)
+
+        # assert
+        self.assertFalse(result)
+
+    def test_IgnoreReserved_WhenTransIsReservationAndSettingsNotIncludes_ThenTrue(self):
+        # arrange
+        sBTrans = {
+            "accountingDate": "2021-10-07T00:00:00",
+            "interestDate": "2021-10-07T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": -31.45,
+            "text": "EasyPark AS",
+            "transactionType": "Bekreftet VISA",
+            "transactionTypeCode": 946,
+            "transactionTypeText": "",
+            "isReservation": True,
+            "reservationType": "VisaReservation",
+            "source": "AccountStatement",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False}
+            
+        class Settings:
+            def __init__(self):
+              self.includeReservedTransactions = False
+              self.daysBack = 10
+
+        settings = Settings()
+
+        # act
+        result = ignoreReserved(sBTrans, settings)
+
+        # assert
+        self.assertTrue(result)
+
 
 if __name__ == '__main__':
     unittest.main()
