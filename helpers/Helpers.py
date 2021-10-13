@@ -225,6 +225,15 @@ def getPayee(transaction):
     return res[0:50]
 
 def getMemo(transaction):
+    """
+    Gets a memo string based on the transaction passed
+
+    Args:
+        transaction (Object): Sbanken Transaction
+
+    Returns:
+        string: Memo string extracted from the transaction
+    """
     transactionId = ''
 
     if transaction['cardDetailsSpecified'] == True:
@@ -270,6 +279,14 @@ def getIntAmountMilli(transaction):
     return int(transaction['amount'] * 1000)
 
 def getYnabSyncId(transaction):
+    """Creates the YNAB transaction id based on amount and date
+
+    Args:
+        transaction (Object): Sbanken transaction object
+
+    Returns:
+        string: YNAB transaction id
+    """
     return "YNAB:"+str(getIntAmountMilli(transaction))+":"+getYnabTransactionDate(transaction)+":"+"1"
 
 def getPaymentsDate(payment):

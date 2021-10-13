@@ -1,10 +1,10 @@
 # Testing the SBanken YNAB integration
 import unittest
-# from unittest.mock import MagicMock
+from unittest.mock import MagicMock
 # from sbanken.Sbanken import Sbanken
 
 #### Helpers tests
-from helpers.Helpers import getPayee, findMatchingTransfer, parseVisaDate, getTransactionDate, parseYearlessDate, getYnabTransactionDate, getMemo
+from helpers.Helpers import getPayee, findMatchingTransfer, parseVisaDate, getTransactionDate, parseYearlessDate, getYnabTransactionDate, getMemo, getAccounts, getIn, getOut, getIntAmountMilli, getYnabSyncId
 from testdata.transactions import *
 
 
@@ -222,13 +222,23 @@ class RunGetTransactionDate(unittest.TestCase):
 
     def test_GetTransactionDate_visa(self):
         # arrange
-        transaction = visa_transaction # 'interestDate': '2021-02-11T00:00:00'
+        transaction = visa_transaction  # 'interestDate': '2021-02-11T00:00:00'
 
         # act
         result = getTransactionDate(transaction)
 
         # assert
         self.assertEqual(result, '09.02.2021')
+
+    def test_GetTransactionDate_visa_long_date(self):
+        # arrange
+        transaction = visa_transaction_long_date # 'purchaseDate': '2022-06-14T00:00:00',
+
+        # act
+        result = getTransactionDate(transaction)
+
+        # assert
+        self.assertEqual(result, '14.06.2021')
 
     def test_GetTransactionDate_credit(self):
         # arrange
@@ -416,6 +426,173 @@ class RunGetMemoTest(unittest.TestCase):
         result = getMemo(transaction)
         # assert
         self.assertEqual(result,'Nettgiro til: berntsen anders ca betalt: 02.11.20')
+
+class RunGetAccountsTest(unittest.TestCase):
+
+    def test_GetAccounts_return_all(self):
+        account_list = [
+            {   'accountId': 'ABC',
+                'accountNumber': '97101236549',
+                'accountType': 'Standard account',
+                'available': 0.0,
+                'balance': 0.0,
+                'creditLimit': 0.0,
+                'name': 'Lønnskonto',
+                'ownerCustomerId': '23056612345'},
+                {'accountId': 'DEF',
+                'accountNumber': '97107894563',
+                'accountType': 'Standard account',
+                'available': 187.43,
+                'balance': 187.43,
+                'creditLimit': 0.0,
+                'name': 'Brukskonto',
+                'ownerCustomerId': '23056612345'
+                }]
+        sbanken = MagicMock()
+        sbanken.GetAccounts = MagicMock(return_value=account_list)
+        
+        # act
+        result = getAccounts(sbanken)
+
+        # Assert
+        self.assertEqual(result[0]['accountNumber'], '97101236549' )
+
+
+    def test_GetAccounts_return_single(self):
+        account_list = [
+            {   'accountId': 'ABC',
+                'accountNumber': '97101236549',
+                'accountType': 'Standard account',
+                'available': 0.0,
+                'balance': 0.0,
+                'creditLimit': 0.0,
+                'name': 'Lønnskonto',
+                'ownerCustomerId': '23056612345'},
+                {'accountId': 'DEF',
+                'accountNumber': '97107894563',
+                'accountType': 'Standard account',
+                'available': 187.43,
+                'balance': 187.43,
+                'creditLimit': 0.0,
+                'name': 'Brukskonto',
+                'ownerCustomerId': '23056612345'
+                }]
+        sbanken = MagicMock()
+        sbanken.GetAccounts = MagicMock(return_value=account_list)
+        
+        # act
+        result = getAccounts(sbanken, '97107894563')
+
+        # Assert
+        self.assertEqual(result['accountId'], 'DEF' )
+
+    def test_GetAccounts_return_none(self):
+        account_list = [
+            {   'accountId': 'ABC',
+                'accountNumber': '97101236549',
+                'accountType': 'Standard account',
+                'available': 0.0,
+                'balance': 0.0,
+                'creditLimit': 0.0,
+                'name': 'Lønnskonto',
+                'ownerCustomerId': '23056612345'},
+                {'accountId': 'DEF',
+                'accountNumber': '97107894563',
+                'accountType': 'Standard account',
+                'available': 187.43,
+                'balance': 187.43,
+                'creditLimit': 0.0,
+                'name': 'Brukskonto',
+                'ownerCustomerId': '23056612345'
+                }]
+        sbanken = MagicMock()
+        sbanken.GetAccounts = MagicMock(return_value=account_list)
+        
+        # act
+        result = getAccounts(sbanken, '97107004563')
+
+        # Assert
+        self.assertEqual(result, None )
+
+class RunGetInOutTest(unittest.TestCase):
+    def test_getOut_negative(self):
+        # arrange
+        transaction = {'amount': -49.0}
+
+        # act
+        result = getOut(transaction)
+
+        # assert
+
+        self.assertEqual(result, 49)
+
+    def test_getOut_positive(self):
+        # arrange
+        transaction = {'amount': 49.0}
+
+        # act
+        result = getOut(transaction)
+
+        # assert
+
+        self.assertEqual(result, '')
+
+    def test_getIn_negative(self):
+        # arrange
+        transaction = {'amount': -49.0}
+
+        # act
+        result = getIn(transaction)
+
+        # assert
+
+        self.assertEqual(result, '')
+
+    def test_getIn_positive(self):
+        # arrange
+        transaction = {'amount': 49.0}
+
+        # act
+        result = getIn(transaction)
+
+        # assert
+
+        self.assertEqual(result, 49)
+
+class RunGetIntAmountMilliTest(unittest.TestCase):
+
+    def test_getAmountMilli_negative(self):
+        # arrange
+        transaction = {'amount': -49.0}
+
+        # act
+        result = getIntAmountMilli(transaction)
+
+        # assert
+        self.assertEqual(result, -49000)
+
+    def test_getAmountMilli_positive(self):
+        # arrange
+        transaction = {'amount': 49.0}
+
+        # act
+        result = getIntAmountMilli(transaction)
+
+        # assert
+        self.assertEqual(result, 49000)
+
+class RunGetYnabSyncId(unittest.TestCase):
+
+    def test_GetYnabSyncId_regular(self):
+        # arrange
+        transaction = nettgiro_actual_transaction_short_text 
+
+        # act
+        result = getYnabSyncId(transaction)
+
+        # assert
+        self.assertEqual(result, 'YNAB:-1500000:2020-11-02:1')
+
 
 
 if __name__ == '__main__':

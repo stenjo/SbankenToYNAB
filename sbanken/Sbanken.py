@@ -139,8 +139,9 @@ class Sbanken:
             array: List of transactions
         """
         queryString = sbanken_api_url + "/api/v1/Transactions/{}?length=1000&startDate={}".format(account_id, startDate.strftime("%Y-%m-%d"))
-
-        if endDate is not None:
+        
+        today = datetime.date.today()
+        if endDate is not None and not endDate == today:
             queryString = sbanken_api_url + "/api/v1/Transactions/{}?startDate={}&endDate={}".format(account_id, startDate.strftime("%Y-%m-%d"), endDate.strftime("%Y-%m-%d"))
             
         # response = self.session.get(queryString, headers={'customerId': self.customer_id})
@@ -241,7 +242,7 @@ class Sbanken:
         today = datetime.date.today()
         endDate = datetime.date(year, 12, 31)
         if today < endDate:
-            endDate = today
+            endDate = today - datetime.timedelta(days=1)
 
         startDate = datetime.date(year, 1, 1)
 
