@@ -1,6 +1,9 @@
 # Testing the SBanken YNAB integration
 import unittest
 from unittest.mock import MagicMock
+from ynab.models.transaction_detail import TransactionDetail
+from ynab.models.account import Account
+import json
 # from sbanken.Sbanken import Sbanken
 
 #### Helpers tests
@@ -55,8 +58,21 @@ class RunFindMatchingTransactionTest(unittest.TestCase):
 
     # def setup(self):
     #     return super(self).setup()
+    def mapAccount(self,a):
+        return Account(
+            id=a['id'],
+            name=a['name'], 
+            type=a['type'],
+            on_budget=a['on_budget'],
+            closed=a['closed'],
+            note=a['note'],
+            balance=a['balance'],
+            cleared_balance=a['cleared_balance'],
+            uncleared_balance=a['uncleared_balance'],
+            transfer_payee_id=a['transfer_payee_id']
+            )
 
-    @unittest.skip("Not working due to test data formatting")
+    # @unittest.skip("Not working due to test data formatting")
     def test_transactions(self):
         # arrange
         original_account = 'A974'
@@ -70,8 +86,7 @@ class RunFindMatchingTransactionTest(unittest.TestCase):
             'source': 'Archive',
             'cardDetailsSpecified': False,
             'transactionDetailSpecified': False, 
-            'accountingDate': '2020-12-30T00:00:00'
-        }
+            'accountingDate': '2020-12-30T00:00:00'        }
         accounts_transactions_list = [
             [
                 {'amount': 198.0, 'interestDate': '2020-12-30T00:00:00', 'transactionTypeCode': 200, 'accountingDate': '2020-12-30T00:00:00'},
@@ -80,12 +95,10 @@ class RunFindMatchingTransactionTest(unittest.TestCase):
             [
                 {'amount': 0, 'interestDate': '2020-12-30T00:00:00', 'transactionTypeCode': 200, 'accountingDate': '2020-12-30T00:00:00'},
                 {'amount': -199.0, 'interestDate': '2020-12-30T00:00:00', 'transactionTypeCode': 200, 'accountingDate': '2020-12-30T00:00:00'}
-            ]
-        ]
+            ]        ]
         accounts = [
             {'Name': 'Brukskonto', 'Number': 97104420188, 'ID': 'A974', 'account': '9280'},
-            {'Name': 'Kredittkort', 'Number': 97290394663, 'ID': '6CF0', 'account': 'a99f'}
-        ]
+            {'Name': 'Kredittkort', 'Number': 97290394663, 'ID': '6CF0', 'account': 'a99f'}]
         account_references = [
             {
                 'balance': 4690970.0,
@@ -141,11 +154,11 @@ class RunFindMatchingTransactionTest(unittest.TestCase):
                 'on_budget': True,
                 'transfer_payee_id': 'd1461c03',
                 'type': 'checking',
-                'uncleared_balance': -587690.0}
-        ]
-        
+                'uncleared_balance': -587690.0}]
+        account_refs = [self.mapAccount(a) for a in account_references]
+       
         # act
-        result = findMatchingTransfer(original_account, transaction, accounts_transactions_list, accounts, account_references)
+        result = findMatchingTransfer(original_account, transaction, accounts_transactions_list, accounts, account_refs)
         
         # assert
         self.assertEqual(result['Name'], 'Kredittkort')
@@ -204,7 +217,7 @@ class RunGetTransactionDate(unittest.TestCase):
         result = getTransactionDate(transaction)
 
         # assert
-        self.assertEqual(result, '28.12.2020')
+        self.assertEqual(result, '30.12.2020')
 
     def test_GetTransactionDate709(self):
         # arrange
@@ -218,7 +231,7 @@ class RunGetTransactionDate(unittest.TestCase):
         result = getTransactionDate(transaction)
 
         # assert
-        self.assertEqual(result, '28.12.2020')
+        self.assertEqual(result, '30.12.2020')
 
     def test_GetTransactionDate_visa(self):
         # arrange
@@ -228,17 +241,17 @@ class RunGetTransactionDate(unittest.TestCase):
         result = getTransactionDate(transaction)
 
         # assert
-        self.assertEqual(result, '09.02.2021')
+        self.assertEqual(result, '10.02.2021')
 
     def test_GetTransactionDate_visa_long_date(self):
         # arrange
-        transaction = visa_transaction_long_date # 'purchaseDate': '2022-06-14T00:00:00',
+        transaction = visa_transaction_long_date # 'accountingDate': '2022-06-15T00:00:00',
 
         # act
         result = getTransactionDate(transaction)
 
         # assert
-        self.assertEqual(result, '14.06.2021')
+        self.assertEqual(result, '15.06.2021')
 
     def test_GetTransactionDate_credit(self):
         # arrange
@@ -249,6 +262,18 @@ class RunGetTransactionDate(unittest.TestCase):
 
         # assert
         self.assertEqual(result, '13.02.2021')
+
+    def test_GetTransactionDate_visa_vare(self):
+        # arrange
+        with open('testdata/visa_vare.json') as json_file:
+            transactions = json.load(json_file)
+
+        # act
+        # assert
+        for transaction in transactions:
+            result = getTransactionDate(transaction)
+            self.assertEqual(result, '09.11.2021')
+
 
 class RunGetYnabTransDate(unittest.TestCase):
 
@@ -278,7 +303,7 @@ class RunGetYnabTransDate(unittest.TestCase):
         result = getYnabTransactionDate(transaction)
 
         # assert
-        self.assertEqual(result, '2020-12-28')
+        self.assertEqual(result, '2020-12-30')
 
 class RunGetPayee(unittest.TestCase):
 
@@ -593,6 +618,262 @@ class RunGetYnabSyncId(unittest.TestCase):
         # assert
         self.assertEqual(result, 'YNAB:-1500000:2020-11-02:1')
 
+class RunCreateYnabTransaction(unittest.TestCase):
+
+    def test_CreateYnabTransaction_reserved(self):
+        # arrange
+        transaction = {
+            "accountingDate": "2021-10-07T00:00:00",
+            "interestDate": "2021-10-07T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": -31.45,
+            "text": "EasyPark AS",
+            "transactionType": "Bekreftet VISA",
+            "transactionTypeCode": 946,
+            "transactionTypeText": "",
+            "isReservation": True,
+            "reservationType": "VisaReservation",
+            "source": "AccountStatement",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+        }
+
+        ynabTransaction = TransactionDetail(
+            date = '2021-10-07', 
+            amount = -31450, 
+            account_id = 'c377-4252-85bc', 
+            account_name = 'Kredittkort',
+            cleared = 'uncleared',
+            approved = False)
+
+        class Settings:
+            def __init__(self):
+              self.transactionFlagColor = 'blue'
+              self.reservedFlagColor = 'red'
+
+        settings = Settings()
+
+        ynab = MagicMock()
+        ynab.Transaction = MagicMock(return_value=ynabTransaction)
+        
+        # act
+        result = createYnabTransaction(ynab, 'account', transaction, settings)
+
+        # assert
+        # self.assertEqual(result, True)
+        ynab.Transaction.assert_called_once_with('2021-10-07',-31450,'account','Reserved: Easypark as','YNAB:-31450:2021-10-07:1')
+        self.assertEqual(result.flag_color, 'red')
+
+    def test_CreateYnabTransaction_archived(self):
+        # arrange
+        transaction =     {
+            "accountingDate": "2021-10-12T00:00:00",
+            "interestDate": "2021-10-12T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": 3000.0,
+            "text": "Fra: Tuva Sofie Johnsen",
+            "transactionType": "StraksOvf",
+            "transactionTypeCode": 561,
+            "transactionTypeText": "StraksOvf",
+            "isReservation": False,
+            "reservationType": None,
+            "source": "Archive",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+        }
+
+        ynabTransaction = TransactionDetail(
+            date = '2021-10-07', 
+            amount = -31450, 
+            account_id = 'a99f18a5-c377-4252-85bc-4ca380f24914', 
+            account_name = 'Kredittkort',
+            cleared = 'uncleared',
+            approved = False)
+
+        class Settings:
+            def __init__(self):
+              self.transactionFlagColor = 'blue'
+              self.reservedFlagColor = 'red'
+
+        settings = Settings()
+
+        ynab = MagicMock()
+        ynab.Transaction = MagicMock(return_value=ynabTransaction)
+        
+        # act
+        result = createYnabTransaction(ynab, 'account', transaction, settings)
+
+        # assert
+        # self.assertEqual(result, True)
+        ynab.Transaction.assert_called_once_with('2021-10-12',3000000,'account','Fra: tuva sofie johnsen','YNAB:3000000:2021-10-12:1')
+        self.assertEqual(result.flag_color, 'blue')
+
+class RunIgnoreReserved(unittest.TestCase):
+    def test_IgnoreReserved_WhenTransIsReservationAndSettingsIncludes_ThenFalse(self):
+        # arrange
+        sBTrans = {
+            "accountingDate": "2021-10-07T00:00:00",
+            "interestDate": "2021-10-07T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": -31.45,
+            "text": "EasyPark AS",
+            "transactionType": "Bekreftet VISA",
+            "transactionTypeCode": 946,
+            "transactionTypeText": "",
+            "isReservation": True,
+            "reservationType": "VisaReservation",
+            "source": "AccountStatement",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+        }
+        class Settings:
+            def __init__(self):
+              self.includeReservedTransactions = True
+
+        settings = Settings()
+
+        # act
+        result = ignoreReserved(sBTrans, settings)
+
+        # assert
+        self.assertFalse(result)
+
+    def test_IgnoreReserved_WhenTransIsNoReservationAndSettingsIncludes_ThenFalse(self):
+        # arrange
+        sBTrans = {
+            "accountingDate": "2021-10-12T00:00:00",
+            "interestDate": "2021-10-12T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": 3000.0,
+            "text": "Fra: Tuva Sofie Johnsen",
+            "transactionType": "StraksOvf",
+            "transactionTypeCode": 561,
+            "transactionTypeText": "StraksOvf",
+            "isReservation": False,
+            "reservationType": None,
+            "source": "Archive",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+        }
+        class Settings:
+            def __init__(self):
+              self.includeReservedTransactions = True
+
+        settings = Settings()
+
+        # act
+        result = ignoreReserved(sBTrans, settings)
+
+        # assert
+        self.assertFalse(result)
+
+    def test_IgnoreReserved_WhenTransIsNotReservationAndSettingsNotIncludes_ThenFalse(self):
+        # arrange
+        sBTrans = {
+            "accountingDate": "2021-10-12T00:00:00",
+            "interestDate": "2021-10-12T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": 3000.0,
+            "text": "Fra: Tuva Sofie Johnsen",
+            "transactionType": "StraksOvf",
+            "transactionTypeCode": 561,
+            "transactionTypeText": "StraksOvf",
+            "isReservation": False,
+            "reservationType": None,
+            "source": "Archive",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False
+         }
+        class Settings:
+            def __init__(self):
+              self.includeReservedTransactions = False
+
+        settings = Settings()
+
+        # act
+        result = ignoreReserved(sBTrans, settings)
+
+        # assert
+        self.assertFalse(result)
+
+    def test_IgnoreReserved_WhenTransIsReservationAndSettingsNotIncludes_ThenTrue(self):
+        # arrange
+        sBTrans = {
+            "accountingDate": "2021-10-07T00:00:00",
+            "interestDate": "2021-10-07T00:00:00",
+            "otherAccountNumberSpecified": False,
+            "amount": -31.45,
+            "text": "EasyPark AS",
+            "transactionType": "Bekreftet VISA",
+            "transactionTypeCode": 946,
+            "transactionTypeText": "",
+            "isReservation": True,
+            "reservationType": "VisaReservation",
+            "source": "AccountStatement",
+            "cardDetailsSpecified": False,
+            "transactionDetailSpecified": False}
+            
+        class Settings:
+            def __init__(self):
+              self.includeReservedTransactions = False
+              self.daysBack = 10
+
+        settings = Settings()
+
+        # act
+        result = ignoreReserved(sBTrans, settings)
+
+        # assert
+        self.assertTrue(result)
+
+class RunSetDates(unittest.TestCase):
+    def test_SetDates_WhenSettingsSays8AndIncludeReserved_ThenDates8DaysApartAndEndDateNone(self):
+        # arrange
+        class Settings:
+            def __init__(self):
+              self.daysBack = 8
+              self.includeReservedTransactions = True
+
+        settings = Settings()
+
+        # act
+        start,end = setDates(settings)
+
+        # assert
+        self.assertEqual(start, datetime.date.today() - datetime.timedelta(8))
+        self.assertEqual(end, None)
+
+    def test_SetDates_WhenSettingsSays8AndNotIncludeReserved_ThenDates8DaysApartAndEndDateToday(self):
+        # arrange
+        class Settings:
+            def __init__(self):
+              self.daysBack = 8
+              self.includeReservedTransactions = False
+
+        settings = Settings()
+
+        # act
+        start,end = setDates(settings)
+
+        # assert
+        self.assertEqual(start, datetime.date.today() - datetime.timedelta(8))
+        self.assertEqual(end, datetime.date.today())
+
+    def test_SetDates_WhenSettingsSaysNoneAndNotIncludeReserved_ThenDates8DaysApartAndEndDateToday(self):
+        # arrange
+        class Settings:
+            def __init__(self):
+            #   self.daysBack = 8
+              self.includeReservedTransactions = False
+
+        settings = Settings()
+
+        # act
+        start,end = setDates(settings)
+
+        # assert
+        self.assertEqual(start, datetime.date.today() - datetime.timedelta(8))
+        self.assertEqual(end, datetime.date.today())
 
 
 if __name__ == '__main__':

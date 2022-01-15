@@ -99,24 +99,24 @@ def getTransactionDate(transaction):
     accountingDate = datetime.datetime.strptime(transaction['accountingDate'].split('T')[0], "%Y-%m-%d")
     if  code == 710 or code == 709:
         d = parseYearlessDate(transaction['text'], forcedYear=d.year)
-    elif code == 714 and transaction['cardDetailsSpecified']: # Visa
-        d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'])
+    # elif code == 714 and transaction['cardDetailsSpecified']: # Visa
+    #     d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'])
     # In case transaction date (purchaseDate og date from text) is more than 300 days away from the
     # accountingDate in the future, substract 1 year from purchaseDate in order to get correct transaction date
     delta = accountingDate - d
     if delta < datetime.timedelta() and (abs(delta) > datetime.timedelta(days=300)):
         if  code == 710 or code == 709:
             d = parseYearlessDate(transaction['text'], forcedYear=(d.year-1))
-        elif code == 714 and transaction['cardDetailsSpecified']:
-            d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'], substractYear=True)
+        # elif code == 714 and transaction['cardDetailsSpecified']:
+        #     d = parseVisaDate(stringDate=transaction['cardDetails']['purchaseDate'], substractYear=True)
         else:
             # Use accounting date if nothing else. Make sure the date is not in the future
             d = accountingDate
 
-    if d > datetime.datetime.today():
-        return accountingDate.strftime('%d.%m.%Y')
-    else:
-        return d.strftime('%d.%m.%Y')
+    # if d > datetime.datetime.today():
+    return accountingDate.strftime('%d.%m.%Y')
+    # else:
+    #     return d.strftime('%d.%m.%Y')
 
 
 def getYnabTransactionDate(transaction):
@@ -319,3 +319,76 @@ def findMatchingTransfer(original_account, transaction, accounts_transactions_li
 
                     return d
 
+def createYnabTransaction(ynab, account, sBTrans, settings):
+    trans = ynab.Transaction(
+            getYnabTransactionDate(sBTrans), 
+            getIntAmountMilli(sBTrans), 
+            account, 
+            getMemo(sBTrans),
+            getYnabSyncId(sBTrans))
+
+    try:
+        trans.payee_name = getPayee(sBTrans)
+        # We raise ValueError in case there is Visa transaction that has no card details, skipping it so far
+    except ValueError:
+        pass
+
+    if 'transactionFlagColor' in vars(settings) and settings.transactionFlagColor != None:
+        trans.flag_color = settings.transactionFlagColor
+
+    if 'reservedFlagColor' in vars(settings) and settings.reservedFlagColor != None and (sBTrans.get('isReservation') == True or (sBTrans.get('otherAccountNumberSpecified') == False and sBTrans.get('source') != 'Archive')):
+        trans.flag_color = settings.reservedFlagColor
+
+    return trans
+
+def ignoreReserved(trans, settings):
+    if settings.includeReservedTransactions != True:
+        if trans.get('isReservation') == True: # or transaction_item.get('otherAccountNumberSpecified') == False:
+            return  True
+    return False
+
+def setAsInternalTransfer(ynabTrans, payee):
+    if 'payee_id' in payee:
+        ynabTrans.payee_id = payee['payee_id']
+        ynabTrans.payee_name = None
+    else:
+        ynabTrans.payee_name = 'Transfer '
+
+        if ynabTrans.amount > 0:
+            ynabTrans.payee_name += 'from: '
+        else:
+            ynabTrans.payee_name += 'to: '
+        ynabTrans.payee_name += payee['Name']
+
+    # logging.info("Found matching internal transaction id: %s, name: %s", yTrn.payee_id, yTrn.payee_name)
+    ynabTrans.memo += ': '+payee['Name']
+
+    return ynabTrans
+
+def setDates(settings):
+    today = datetime.date.today()
+    endDate = today
+    startDate = today - datetime.timedelta(8)  # Last 8 days - unless changed in api_settings
+    
+    if 'daysBack' in vars(settings) and settings.daysBack != None:
+        startDate = today - datetime.timedelta(settings.daysBack)
+
+    if settings.includeReservedTransactions == True:
+        endDate = None    
+
+    return startDate, endDate
+
+def updateExistingYnabTrans(transaction, updated):
+    transaction.id = updated.id
+    transaction.cleared = updated.cleared
+    transaction.approved = updated.approved
+    transaction.category_id = updated.category_id
+    transaction.category_name = updated.category_name
+    # if transaction.memo != updated.memo or transaction.payee_name != updated.payee_name:
+    # transaction.memo = updated.memo
+    if transaction.payee_name != updated.payee_name:
+        transaction.payee_id = None
+    else:
+        transaction.payee_id = updated.payee_id
+
+    return transaction
