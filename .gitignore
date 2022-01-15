@@ -11,12 +11,11 @@ sync_accounts.1.py
 bash_script.sh
 api_settings_temp.py
 coverage.xml
-api_settings.*
+api_settings*.*
 */__pycache__/*
 log/*
 *.log
 statements-PC0JMFYU.py
 transactions-*.py
 workspace.code-workspace
-Untitled-1.txt
 .coverage
