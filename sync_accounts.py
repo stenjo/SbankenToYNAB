@@ -135,7 +135,7 @@ for account_idx in range(len(accounts)):
                 yTrn.payee_id = None
             else:
                 yTrn.payee_id = update_transaction.payee_id
-            ynab_updates.append(yTrn)
+            ynab_updates.append(ynab.UpdateTransaction(yTrn))
 
         elif len(account_map['account']) > 2:   # New transactions not yet in YNAB
             yTrs.append(yTrn)

@@ -109,3 +109,18 @@ class Ynab:
             deleted=False, 
             id = transactionId
         )
+    
+    def UpdateTransaction(self, transaction):
+        return UpdateTransaction(
+            date = transaction.date,
+            amount = transaction.amount,
+            cleared = transaction.cleared,
+            approved = transaction.approved,
+            account_id = transaction.account_id,
+            account_name = transaction.account_name,
+            memo = transaction.memo,
+            import_id = transaction.import_id,
+            subtransactions = transaction.subtransactions,
+            deleted = transaction.deleted,
+            id = transaction.id
+        )
