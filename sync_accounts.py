@@ -70,7 +70,7 @@ for account_idx in range(len(accounts)):
         
         logging.info("Transaction: %s,  amount: %s, typecode: %s, text: %s", getYnabTransactionDate(transaction_item), transaction_item['amount'], transaction_item['transactionTypeCode'], getMemo(transaction_item))
 
-        yTrn = ynab.Transaction(
+        yTrn = ynab.SaveTransaction(
             getYnabTransactionDateAsDate(transaction_item), 
             getIntAmountMilli(transaction_item), 
             account_map['account'], 

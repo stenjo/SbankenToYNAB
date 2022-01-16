@@ -1,6 +1,6 @@
 import ynab_api
 from ynab_api.api import accounts_api, transactions_api
-from ynab_api.models import TransactionDetail
+from ynab_api.models import TransactionDetail, SaveTransaction
 # from ynab_api import exceptions, models
 
 class Ynab:
@@ -81,6 +81,22 @@ class Ynab:
     def Transaction(self, tdate, tamount, accountId, tmemo, timportId, accountName, subtrans=[], transactionId = ''):
         # api_instance = accounts_api.TransactionsApi(self.api_client)
         return TransactionDetail(
+            date=tdate, 
+            amount=tamount, 
+            cleared='uncleared', 
+            approved=False, 
+            account_id=accountId,
+            account_name=accountName,
+            memo=tmemo,
+            import_id=timportId,
+            subtransactions=subtrans,
+            deleted=False, 
+            id = transactionId
+        )
+        
+    def SaveTransaction(self, tdate, tamount, accountId, tmemo, timportId, accountName, subtrans=[], transactionId = ''):
+        # api_instance = accounts_api.TransactionsApi(self.api_client)
+        return SaveTransaction(
             date=tdate, 
             amount=tamount, 
             cleared='uncleared', 
