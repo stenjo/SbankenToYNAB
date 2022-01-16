@@ -3,6 +3,7 @@ import datetime
 import pprint
 import string
 import re
+import date
 
 def enable_debug_logging():
     import logging
@@ -147,10 +148,10 @@ def getYnabTransactionDateAsDate(transaction):
         string: Transaction date in the format YYYY-MM-DD
     """
     if 'beneficiaryName' in transaction:
-        return datetime.datetime.strptime(getPaymentsDate(transaction), "%d.%m.%Y")
+        return datetime.datetime.strptime(getPaymentsDate(transaction), "%d.%m.%Y").date()
         # return d.strftime('%Y-%m-%d')
     else:
-        return datetime.datetime.strptime( getTransactionDate(transaction), "%d.%m.%Y")
+        return datetime.datetime.strptime( getTransactionDate(transaction), "%d.%m.%Y").date()
         # return d.strftime('%Y-%m-%d')
 
 def getPayee(transaction):
