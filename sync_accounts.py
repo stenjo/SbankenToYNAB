@@ -83,10 +83,10 @@ for account_idx in range(len(accounts)):
         yTrn.payee_name = payee_name
 
         if 'transactionFlagColor' in vars(api_settings) and api_settings.transactionFlagColor != None:
-            yTrn.flag_color = api_settings.transactionFlagColor
+            yTrn.flag_color = api_settings.transactionFlagColor.lower()
 
         if 'reservedFlagColor' in vars(api_settings) and api_settings.reservedFlagColor != None and (transaction_item.get('isReservation') == True or (transaction_item.get('otherAccountNumberSpecified') == False and transaction_item.get('source') != 'Archive')):
-            yTrn.flag_color = api_settings.reservedFlagColor
+            yTrn.flag_color = api_settings.reservedFlagColor.lower()
 
 
         # Change import_id if same amount on same day several times
