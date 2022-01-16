@@ -1,3 +1,4 @@
+[![codecov](https://codecov.io/gh/stenjo/SbankenToYNAB/branch/master/graph/badge.svg?token=UOMQUN7S49)](https://codecov.io/gh/stenjo/SbankenToYNAB)
 # SbankenToYNAB
 Importing data from Sbanken to YNAB using Sbanken API and python 3
 Exported from https://github.com/sbanken

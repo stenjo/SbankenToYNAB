@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 # from sbanken.Sbanken import Sbanken
 
 #### Helpers tests
-from helpers.Helpers import getPayee, findMatchingTransfer, parseVisaDate, getTransactionDate, parseYearlessDate, getYnabTransactionDate, getMemo, getAccounts, getIn, getOut, getIntAmountMilli, getYnabSyncId
+from helpers.Helpers import *
 from testdata.transactions import *
 
 
