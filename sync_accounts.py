@@ -6,7 +6,7 @@ import logging
 import platform
 
 from pprint import pprint
-from helpers.Helpers import getTransactionDate, getPayee, getMemo, getOut, getIn, getIntAmountMilli, getYnabTransactionDate, getYnabSyncId, findMatchingTransfer
+from helpers.Helpers import getTransactionDate, getPayee, getMemo, getOut, getIn, getIntAmountMilli, getYnabTransactionDate, getYnabTransactionDateAsDate, getYnabSyncId, findMatchingTransfer
 from sbanken.Sbanken import Sbanken
 from ynab.Ynab import Ynab
 
@@ -71,7 +71,7 @@ for account_idx in range(len(accounts)):
         logging.info("Transaction: %s,  amount: %s, typecode: %s, text: %s", getYnabTransactionDate(transaction_item), transaction_item['amount'], transaction_item['transactionTypeCode'], getMemo(transaction_item))
 
         yTrn = ynab.Transaction(
-            getYnabTransactionDate(transaction_item), 
+            getYnabTransactionDateAsDate(transaction_item), 
             getIntAmountMilli(transaction_item), 
             account_map['account'], 
             getMemo(transaction_item),
