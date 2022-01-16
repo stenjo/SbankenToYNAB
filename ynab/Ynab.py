@@ -1,6 +1,6 @@
 import ynab_api
 from ynab_api.api import accounts_api, transactions_api
-from ynab_api.models import TransactionDetail, SaveTransaction
+from ynab_api.models import TransactionDetail, SaveTransaction, UpdateTransaction
 # from ynab_api import exceptions, models
 
 class Ynab:
