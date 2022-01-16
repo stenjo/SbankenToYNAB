@@ -75,7 +75,8 @@ for account_idx in range(len(accounts)):
             getIntAmountMilli(transaction_item), 
             account_map['account'], 
             getMemo(transaction_item),
-            getYnabSyncId(transaction_item)
+            getYnabSyncId(transaction_item),
+            account_map['Name']
         )
 
 
