@@ -3,7 +3,6 @@ import datetime
 import pprint
 import string
 import re
-import date
 
 def enable_debug_logging():
     import logging
