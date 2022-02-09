@@ -6,7 +6,7 @@ import logging
 import platform
 
 from pprint import pprint
-from helpers.Helpers import getTransactionDate, getPayee, getMemo, getOut, getIn, getIntAmountMilli, getYnabTransactionDate, getYnabSyncId, findMatchingTransfer
+from helpers.Helpers import getTransactionDate, getPayee, getMemo, getOut, getIn, getIntAmountMilli, getYnabTransactionDate, getYnabTransactionDateAsDate, getYnabSyncId, findMatchingTransfer
 from sbanken.Sbanken import Sbanken
 from ynab.Ynab import Ynab
 
@@ -70,22 +70,23 @@ for account_idx in range(len(accounts)):
         
         logging.info("Transaction: %s,  amount: %s, typecode: %s, text: %s", getYnabTransactionDate(transaction_item), transaction_item['amount'], transaction_item['transactionTypeCode'], getMemo(transaction_item))
 
-        yTrn = ynab.Transaction(
-            getYnabTransactionDate(transaction_item), 
+        yTrn = ynab.SaveTransaction(
+            getYnabTransactionDateAsDate(transaction_item), 
             getIntAmountMilli(transaction_item), 
             account_map['account'], 
             getMemo(transaction_item),
-            getYnabSyncId(transaction_item)
+            getYnabSyncId(transaction_item),
+            account_map['Name']
         )
 
 
         yTrn.payee_name = payee_name
 
         if 'transactionFlagColor' in vars(api_settings) and api_settings.transactionFlagColor != None:
-            yTrn.flag_color = api_settings.transactionFlagColor
+            yTrn.flag_color = api_settings.transactionFlagColor.lower()
 
         if 'reservedFlagColor' in vars(api_settings) and api_settings.reservedFlagColor != None and (transaction_item.get('isReservation') == True or (transaction_item.get('otherAccountNumberSpecified') == False and transaction_item.get('source') != 'Archive')):
-            yTrn.flag_color = api_settings.reservedFlagColor
+            yTrn.flag_color = api_settings.reservedFlagColor.lower()
 
 
         # Change import_id if same amount on same day several times
@@ -134,7 +135,7 @@ for account_idx in range(len(accounts)):
                 yTrn.payee_id = None
             else:
                 yTrn.payee_id = update_transaction.payee_id
-            ynab_updates.append(yTrn)
+            ynab_updates.append(ynab.UpdateTransaction(yTrn))
 
         elif len(account_map['account']) > 2:   # New transactions not yet in YNAB
             yTrs.append(yTrn)
